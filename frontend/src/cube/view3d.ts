@@ -39,13 +39,11 @@ const AXIS_VEC = [
   new THREE.Vector3(0, 0, 1),
 ]
 
-function nearestAxis(v: THREE.Vector3): { axis: Axis; sign: number } {
-  const ax = Math.abs(v.x)
-  const ay = Math.abs(v.y)
-  const az = Math.abs(v.z)
-  if (ax >= ay && ax >= az) return { axis: 0, sign: v.x >= 0 ? 1 : -1 }
-  if (ay >= az) return { axis: 1, sign: v.y >= 0 ? 1 : -1 }
-  return { axis: 2, sign: v.z >= 0 ? 1 : -1 }
+function faceOnLayer(axis: Axis, layer: number): Face | null {
+  for (const [face, spec] of Object.entries(FACE_TWIST) as [Face, (typeof FACE_TWIST)[Face]][]) {
+    if (spec.axis === axis && spec.layer === layer) return face
+  }
+  return null
 }
 
 export class CubeView {
@@ -62,7 +60,7 @@ export class CubeView {
   private queue: ParsedMove[] = []
   private orbitFrozen = false
   holdOrbit = false
-  onCommit: ((notation: string) => void) | null = null
+  onCommit: ((notation: string, source: 'user' | 'script') => void) | null = null
   onBusyChange: ((busy: boolean) => void) | null = null
 
   constructor(canvas: HTMLCanvasElement) {
@@ -136,7 +134,7 @@ export class CubeView {
   }
 
   beginDrag(axis: Axis, layer: -1 | 0 | 1) {
-    if (this.anim) return false
+    if (this.anim || layer === 0) return false
     this.controls.enabled = false
     this.orbitFrozen = true
     const ids = this.idsOn(axis, layer)
@@ -212,18 +210,33 @@ export class CubeView {
     const onFace = worldDrag.clone().sub(n.multiplyScalar(worldDrag.dot(n)))
     if (onFace.lengthSq() < 1e-8) return null
     const rot = n.clone().cross(onFace).normalize()
-    const snapped = nearestAxis(rot)
-    const layer = Math.round(cubie.grid.getComponent(snapped.axis)) as -1 | 0 | 1
-    const tangent = new THREE.Vector3().crossVectors(AXIS_VEC[snapped.axis], cubie.grid)
-    if (tangent.lengthSq() < 1e-6) tangent.crossVectors(AXIS_VEC[snapped.axis], n)
+    let axis: Axis | null = null
+    let best = 0.2
+    for (const candidate of [0, 1, 2] as Axis[]) {
+      if (Math.round(cubie.grid.getComponent(candidate)) === 0) continue
+      const score = Math.abs(rot.getComponent(candidate))
+      if (score > best) {
+        best = score
+        axis = candidate
+      }
+    }
+    if (axis === null) return null
+    const layer = Math.round(cubie.grid.getComponent(axis)) as -1 | 1
+    const tangent = new THREE.Vector3().crossVectors(AXIS_VEC[axis], cubie.grid)
+    if (tangent.lengthSq() < 1e-6) tangent.crossVectors(AXIS_VEC[axis], n)
     tangent.normalize()
     const screenT = tangent.clone().project(cam)
     const rect = this.renderer.domElement.getBoundingClientRect()
     const dir = new THREE.Vector2(screenT.x * rect.width * 0.5, -screenT.y * rect.height * 0.5)
     if (dir.lengthSq() < 1e-6) return null
     dir.normalize()
-    const sign = Math.sign(screenDelta.dot(dir) || snapped.sign)
-    return { axis: snapped.axis, layer, sign, dir }
+    const sign = Math.sign(screenDelta.dot(dir) || 1)
+    return { axis, layer, sign, dir }
+  }
+
+  dragFace(): Face | null {
+    if (!this.anim || this.anim.mode !== 'drag') return null
+    return faceOnLayer(this.anim.axis, this.anim.layer)
   }
 
   nudgeOrbit(dx: number, dy: number) {
@@ -284,10 +297,13 @@ export class CubeView {
     const deg = a.from + (a.target - a.from) * e
     this.paintLayer(a.axis, a.ids, deg)
     if (t < 1) return
-    this.bakeLayer(a.axis, a.ids, a.target)
-    const notation = a.mode === 'auto' ? a.notation : this.notationFrom(a.axis, a.layer, a.target)
+    const user = a.mode !== 'auto'
+    let notation = a.mode === 'auto' ? (a.notation ?? null) : this.notationFrom(a.axis, a.layer, a.target)
+    let bake = a.target
+    if (user && bake !== 0 && !notation) bake = 0
+    this.bakeLayer(a.axis, a.ids, bake)
     this.clearAnim()
-    if (notation && a.target !== 0) this.onCommit?.(notation)
+    if (notation && bake !== 0) this.onCommit?.(notation, user ? 'user' : 'script')
     this.orbitFrozen = false
     this.onBusyChange?.(this.queue.length > 0)
     this.kick()

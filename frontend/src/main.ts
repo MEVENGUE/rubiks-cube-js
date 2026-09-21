@@ -60,8 +60,10 @@ let solution: string[] = []
 let solIndex = 0
 let playing = false
 let awaitingSolution = false
-let skipRobotCommit = false
 let cameraOn = false
+let solveTicket = 0
+let solvePending = false
+let solveRetries = 0
 const hands = new HandEngine(webcam, overlay)
 
 worker.postMessage({ type: 'init' })
@@ -75,17 +77,23 @@ worker.onmessage = (e: MessageEvent) => {
     solverState.textContent = 'Kociemba prêt'
     btnSolve.disabled = false
   } else if (msg.type === 'solution') {
+    if (typeof msg.id === 'number' && msg.id !== solveTicket) return
+    solvePending = false
     const alg = String(msg.solution || '').trim()
     solution = alg ? alg.split(/\s+/) : []
     solIndex = 0
     playing = solution.length > 0
+    graph.setFacelets(model.facelets())
     renderPath()
     solverState.textContent = solution.length
       ? `${solution.length} coups`
       : 'déjà résolu'
     syncTransport()
     if (playing) issueSolutionMove()
+    else refreshHud()
   } else if (msg.type === 'error') {
+    if (typeof msg.id === 'number' && msg.id !== solveTicket) return
+    solvePending = false
     solverState.textContent = msg.message
   }
 }
@@ -125,12 +133,35 @@ function moveDuration(move: { turns: number }) {
   return Math.abs(move.turns) === 2 ? 980 : 760
 }
 
+function followDuration(move: { turns: number }) {
+  return Math.abs(move.turns) === 2 ? 460 : 320
+}
+
+function requestSolve() {
+  if (!solverReady || view.busy) return false
+  if (model.isSolved()) {
+    playing = false
+    solverState.textContent = 'déjà résolu'
+    setRobotAction('Résolu')
+    refreshHud()
+    syncTransport()
+    return false
+  }
+  const id = ++solveTicket
+  solvePending = true
+  solverState.textContent = 'recherche du chemin…'
+  graph.setFacelets(model.facelets())
+  graph.highlight = null
+  graph.draw()
+  worker.postMessage({ type: 'solve', facelets: model.facelets(), id })
+  return true
+}
+
 function startTurn(parsed: ReturnType<typeof parseMove>) {
   if (!parsed || view.busy) return false
   graph.playMove(parsed, model.facelets(), moveDuration(parsed))
   view.enqueue(parsed)
   robot.enqueue(parsed)
-  skipRobotCommit = true
   setRobotAction(parsed.notation)
   return true
 }
@@ -185,8 +216,29 @@ function issueSolutionMove(fromPlay = false) {
   }
   if (solIndex >= solution.length) {
     playing = false
+    if (!model.isSolved() && solveRetries < 2 && solverReady) {
+      solveRetries += 1
+      solverState.textContent = 'recalcul…'
+      setRobotAction('Recalcul')
+      solution = []
+      solIndex = 0
+      pathEl.innerHTML = ''
+      const retry = () => {
+        if (view.busy) {
+          requestAnimationFrame(retry)
+          return
+        }
+        if (!requestSolve()) refreshHud()
+      }
+      retry()
+      return
+    }
+    solveRetries = 0
     graph.highlight = null
-    graph.draw()
+    if (!graph.busy) {
+      graph.setFacelets(model.facelets())
+      graph.draw()
+    }
     setRobotAction(model.isSolved() ? 'Résolu' : 'Repos')
     refreshHud()
     syncTransport()
@@ -243,13 +295,21 @@ function replayMoveAt(index: number) {
   issueSolutionMove()
 }
 
-view.onCommit = (notation) => {
+view.onCommit = (notation, source) => {
   const parsed = parseMove(notation)
-  if (parsed && !graph.busy) {
-    graph.playMove(parsed, model.facelets(), moveDuration(parsed))
+  if (source === 'user') {
+    const resume = playing || awaitingSolution || solvePending || solution.length > 0
+    clearSolution()
+    if (parsed) {
+      graph.playMove(parsed, model.facelets(), followDuration(parsed))
+      robot.enqueue(parsed)
+      setRobotAction(parsed.notation)
+    }
+    model.apply(notation)
+    refreshHud()
+    if (resume) requestSolve()
+    return
   }
-  if (parsed && !skipRobotCommit) robot.enqueue(parsed)
-  skipRobotCommit = false
   model.apply(notation)
   refreshHud()
   if (awaitingSolution) {
@@ -293,12 +353,9 @@ btnReset.addEventListener('click', () => {
 
 btnSolve.addEventListener('click', () => {
   if (!solverReady || view.busy) return
-  if (model.isSolved()) {
-    solverState.textContent = 'déjà résolu'
-    return
-  }
-  solverState.textContent = 'recherche du chemin…'
-  worker.postMessage({ type: 'solve', facelets: model.facelets() })
+  clearSolution()
+  solveRetries = 0
+  requestSolve()
 })
 
 btnBack.addEventListener('click', () => {
@@ -355,7 +412,7 @@ btnRobotSolve.addEventListener('click', () => {
     return
   }
   setRobotAction('Planification')
-  if (solution.length > 0 && solIndex < solution.length) {
+  if (solution.length > 0 && solIndex < solution.length && !solvePending) {
     playing = true
     issueSolutionMove()
     return
@@ -364,8 +421,9 @@ btnRobotSolve.addEventListener('click', () => {
     solverState.textContent = 'solveur indisponible'
     return
   }
-  solverState.textContent = 'recherche du chemin…'
-  worker.postMessage({ type: 'solve', facelets: model.facelets() })
+  clearSolution()
+  solveRetries = 0
+  requestSolve()
 })
 
 document.querySelector('#move-buttons')!.addEventListener('click', (e) => {
@@ -439,13 +497,18 @@ let pointerDrag: PointerDrag | null = null
 const activePointers = new Set<number>()
 
 function releaseTurn(commit: boolean, flickSign = 0) {
-  if (pointerDrag?.locked) {
+  const locked = pointerDrag?.locked ?? false
+  if (locked) {
     if (commit) {
       if (flickSign) view.kickDrag(flickSign)
       view.settleDrag()
     } else {
       view.updateDrag(0)
       view.settleDrag()
+      if (!graph.busy && solution.length === 0) {
+        graph.highlight = null
+        graph.draw()
+      }
     }
   }
   if (pointerDrag) {
@@ -471,7 +534,11 @@ canvas.addEventListener('pointerdown', (e) => {
   const hit = view.hitSticker(e.clientX, e.clientY)
   if (!hit) return
   e.stopPropagation()
-  canvas.setPointerCapture(e.pointerId)
+  try {
+    canvas.setPointerCapture(e.pointerId)
+  } catch {
+    /* le pointeur n’est plus capturable */
+  }
   canvas.classList.add('dragging')
   view.holdOrbit = true
   view.controls.enabled = false
@@ -514,6 +581,11 @@ canvas.addEventListener('pointermove', (e) => {
   pointerDrag.lastX = e.clientX
   pointerDrag.lastY = e.clientY
   pointerDrag.lastT = now
+  const face = view.dragFace()
+  if (face && !graph.busy) {
+    graph.highlight = face
+    graph.draw()
+  }
   if (!pointerDrag.dir) return
   const pixels = new THREE.Vector2(dx, dy).dot(pointerDrag.dir) * pointerDrag.sign
   const per90 = e.pointerType === 'mouse' ? 78 : 62

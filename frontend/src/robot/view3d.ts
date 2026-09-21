@@ -133,6 +133,10 @@ export class RobotView {
 
   enqueue(move: ParsedMove) {
     this.queue.push(move)
+    if (this.anim && this.queue.length >= 2) {
+      const elapsed = performance.now() - this.anim.t0
+      this.anim.dur = Math.min(this.anim.dur, elapsed + 100)
+    }
     this.kick()
   }
 
@@ -163,12 +167,14 @@ export class RobotView {
     const move = this.queue.shift()!
     const spec = FACE_TWIST[move.face]
     const target = spec.dir * move.turns * 90
+    const backlog = this.queue.length
+    const base = Math.abs(move.turns) === 2 ? 360 : 260
     this.anim = {
       axis: spec.axis,
       from: 0,
       target,
       t0: performance.now(),
-      dur: Math.abs(move.turns) === 2 ? 360 : 260,
+      dur: backlog >= 3 ? 110 : backlog >= 1 ? Math.min(base, 160) : base,
       ids: this.idsOn(spec.axis, spec.layer),
       notation: move.notation,
       wristFrom: this.wrist.rotation.z,

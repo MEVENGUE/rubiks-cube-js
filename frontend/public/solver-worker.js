@@ -12,9 +12,13 @@ self.onmessage = function (e) {
     try {
       const cube = Cube.fromString(msg.facelets)
       const solution = cube.solve()
-      postMessage({ type: 'solution', solution: solution || '' })
+      postMessage({ type: 'solution', solution: solution || '', id: msg.id })
     } catch (err) {
-      postMessage({ type: 'error', message: String(err && err.message ? err.message : err) })
+      postMessage({
+        type: 'error',
+        message: String(err && err.message ? err.message : err),
+        id: msg.id,
+      })
     }
   }
 }

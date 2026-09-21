@@ -55,6 +55,8 @@ function alongArc(from: Pt, to: Pt, c: Pt, t: number, prefer: number): Pt {
   return { x: c.x + r * Math.cos(a), y: c.y + r * Math.sin(a) }
 }
 
+type QueuedMove = { move: ParsedMove; startFacelets: string; dur: number }
+
 export class GraphView {
   private ctx: CanvasRenderingContext2D
   private canvas: HTMLCanvasElement
@@ -62,6 +64,7 @@ export class GraphView {
   private facelets = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
   highlight: Face | null = null
   private anim: Anim | null = null
+  private queue: QueuedMove[] = []
 
   constructor(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d')
@@ -71,20 +74,37 @@ export class GraphView {
   }
 
   get busy() {
-    return this.anim !== null
+    return this.anim !== null || this.queue.length > 0
   }
 
   setFacelets(s: string) {
     this.anim = null
+    this.queue = []
     this.facelets = s
   }
 
   playMove(move: ParsedMove, startFacelets: string, dur: number) {
-    const layout = this.layout
-    if (!layout) {
-      this.facelets = startFacelets
+    if (this.anim || this.queue.length > 0) {
+      this.queue.push({ move, startFacelets, dur })
+      if (this.anim && this.queue.length >= 2) {
+        const elapsed = performance.now() - this.anim.t0
+        this.anim.dur = Math.min(this.anim.dur, elapsed + 140)
+      }
       return
     }
+    this.beginMove(move, startFacelets, dur)
+  }
+
+  private beginMove(move: ParsedMove, startFacelets: string, dur: number) {
+    const layout = this.layout
+    if (!layout) {
+      this.facelets = applyFacelets(startFacelets, move.notation)
+      const next = this.queue.shift()
+      if (next) this.beginMove(next.move, next.startFacelets, next.dur)
+      return
+    }
+    const backlog = this.queue.length
+    const paced = backlog >= 3 ? 150 : backlog >= 1 ? Math.min(dur, 260) : dur
     const src = sourcesForMove(move)
     const center = layout.centers[move.face]
     const nodeByFacelet: Pt[] = new Array(54)
@@ -109,7 +129,7 @@ export class GraphView {
     if (endFacelets !== expected) endFacelets = expected
     this.anim = {
       t0: performance.now(),
-      dur,
+      dur: paced,
       face: move.face,
       turns: move.turns,
       spin: Math.sign(spinVote) || (move.turns === -1 ? 1 : -1),
@@ -120,15 +140,24 @@ export class GraphView {
   }
 
   tick() {
+    if (!this.anim && this.queue.length > 0) {
+      const next = this.queue.shift()!
+      this.beginMove(next.move, next.startFacelets, next.dur)
+    }
     if (!this.anim) return
     const t = Math.min(1, (performance.now() - this.anim.t0) / this.anim.dur)
     this.draw(ease(t))
-    if (t >= 1) {
-      this.facelets = this.anim.endFacelets
-      this.anim = null
+    if (t < 1) return
+    this.facelets = this.anim.endFacelets
+    this.anim = null
+    const next = this.queue.shift()
+    if (!next) {
       this.highlight = null
       this.draw()
+      return
     }
+    const start = next.startFacelets.length === 54 ? next.startFacelets : this.facelets
+    this.beginMove(next.move, start, next.dur)
   }
 
   resize() {
