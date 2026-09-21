@@ -134,7 +134,7 @@ Railway construit le frontend puis lance le serveur Node de `backend/`. **Ne pas
 
 1. [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub**.
 2. Variables : aucune obligatoire (`PORT` est injecté).
-3. Build / start : déjà dans [`railway.toml`](./railway.toml) (`npm run build` puis `npm start`).
+3. Build : le [`Dockerfile`](./backend/Dockerfile), déjà indiqué dans [`railway.toml`](./railway.toml). Node de l’image doit être **22.12 ou plus** (Vite 8).
 
 **Docker** (optionnel), depuis la racine du repo :
 
