@@ -8,6 +8,14 @@ Un quart de tour s’écrit `U`. L’inverse s’écrit `U'`. Le demi-tour s’�
 
 ---
 
+## Nouvelle partie
+
+Avant de **lancer** ou de **modifier** une nouvelle partie, appuyez sur **Reset** (ou la touche `Z`).
+
+Le cube revient à l’état résolu et le chemin en cours est effacé. Ensuite seulement : **Mélanger**, tours à la souris, au doigt ou au clavier, puis **Résoudre**. Sans ce reset, les coups de la partie précédente restent sur le cube.
+
+---
+
 ## Souris (ordinateur)
 
 | Geste | Effet |
