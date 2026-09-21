@@ -507,8 +507,7 @@ btnCamera.addEventListener('click', async () => {
     await hands.start()
     cameraOn = true
     camBox.classList.add('on')
-    overlay.width = 220
-    overlay.height = 124
+    syncCamOverlay()
     btnCamera.textContent = 'Couper la caméra'
     btnSwap.hidden = false
     gesturePill.textContent = 'gestes on'
@@ -619,13 +618,23 @@ function loop() {
   requestAnimationFrame(loop)
 }
 
+function syncCamOverlay() {
+  const rect = webcam.getBoundingClientRect()
+  const w = Math.max(1, Math.round(rect.width))
+  const h = Math.max(1, Math.round(rect.height))
+  if (overlay.width !== w) overlay.width = w
+  if (overlay.height !== h) overlay.height = h
+}
+
 const ro = new ResizeObserver(() => {
   view.resize()
   graph.resize()
   robot.resize()
+  if (cameraOn) syncCamOverlay()
 })
 ro.observe(canvas.parentElement!)
 ro.observe(vizStage)
+ro.observe(camBox)
 
 refreshHud()
 graph.resize()

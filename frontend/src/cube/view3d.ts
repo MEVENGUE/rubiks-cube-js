@@ -100,6 +100,7 @@ export class CubeView {
     const h = canvas.clientHeight
     if (w === 0 || h === 0) return
     this.camera.aspect = w / h
+    this.camera.fov = w / h < 0.9 ? 50 : 36
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(w, h, false)
   }
