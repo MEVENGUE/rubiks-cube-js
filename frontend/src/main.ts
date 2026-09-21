@@ -2,7 +2,7 @@ import './style.css'
 import * as THREE from 'three'
 import { CubeModel } from './cube/model'
 import { CubeView } from './cube/view3d'
-import { parseMove, invertMove } from './cube/notation'
+import { parseMove, invertMove, isOuterFace } from './cube/notation'
 import { GraphView } from './graph/view'
 import { RobotView } from './robot/view3d'
 import { HandEngine, type Tracked } from './gestures/hands'
@@ -251,7 +251,7 @@ function issueSolutionMove(fromPlay = false) {
     issueSolutionMove()
     return
   }
-  graph.highlight = parsed.face
+  graph.highlight = isOuterFace(parsed.face) ? parsed.face : null
   renderPath()
   awaitingSolution = true
   startTurn(parsed)
@@ -280,7 +280,7 @@ function jumpToIndex(target: number) {
   solIndex = target
   graph.setFacelets(model.facelets())
   const current = solIndex < solution.length ? parseMove(solution[solIndex]) : null
-  graph.highlight = current?.face ?? null
+  graph.highlight = current && isOuterFace(current.face) ? current.face : null
   graph.draw()
   refreshHud()
   renderPath()

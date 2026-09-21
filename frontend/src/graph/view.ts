@@ -1,4 +1,4 @@
-import { FACE_HEX, type Face, type ParsedMove } from '../cube/notation'
+import { FACE_HEX, isOuterFace, type Face, type MoveFace, type ParsedMove } from '../cube/notation'
 import { buildGraphLayout, type GraphLayout, type Pt } from './layout'
 import { applyFacelets, sourcesForMove } from './moves'
 
@@ -13,7 +13,7 @@ type Particle = {
 type Anim = {
   t0: number
   dur: number
-  face: Face
+  face: MoveFace
   turns: number
   spin: number
   particles: Particle[]
@@ -106,7 +106,7 @@ export class GraphView {
     const backlog = this.queue.length
     const paced = backlog >= 3 ? 150 : backlog >= 1 ? Math.min(dur, 260) : dur
     const src = sourcesForMove(move)
-    const center = layout.centers[move.face]
+    const anchor = isOuterFace(move.face) ? layout.centers[move.face] : null
     const nodeByFacelet: Pt[] = new Array(54)
     for (const n of layout.nodes) nodeByFacelet[faceletIndex(n.face, n.index)] = n
 
@@ -119,8 +119,9 @@ export class GraphView {
       const to = nodeByFacelet[dest]
       if (!from || !to) continue
       const col = startFacelets[fromI] as Face
-      particles.push({ color: col, from, to, cx: center.x, cy: center.y })
-      spinVote += signedAngle(from, to, center).da
+      const hub = anchor ?? layout.centers[ORDER[Math.floor(dest / 9)] as Face]
+      particles.push({ color: col, from, to, cx: hub.x, cy: hub.y })
+      spinVote += signedAngle(from, to, hub).da
     }
     const end: string[] = new Array(54)
     for (let i = 0; i < 54; i++) end[i] = startFacelets[src[i]]
@@ -136,7 +137,7 @@ export class GraphView {
       particles,
       endFacelets,
     }
-    this.highlight = move.face
+    this.highlight = isOuterFace(move.face) ? move.face : null
   }
 
   tick() {
@@ -179,7 +180,7 @@ export class GraphView {
     ctx.fillStyle = '#f4efe4'
     ctx.fillRect(0, 0, w, h)
 
-    const spinFace = this.anim?.face ?? this.highlight
+    const spinFace = this.anim && isOuterFace(this.anim.face) ? this.anim.face : this.highlight
     const spinAmt = this.anim
       ? this.anim.spin * (Math.abs(this.anim.turns) === 2 ? Math.PI : Math.PI / 2) * t
       : 0
@@ -320,7 +321,7 @@ export class GraphView {
     ctx.restore()
   }
 
-  private drawMoveBadge(w: number, face: Face, turns: number) {
+  private drawMoveBadge(w: number, face: MoveFace, turns: number) {
     const ctx = this.ctx
     const label = turns === 2 ? `${face}2` : turns === -1 ? `${face}'` : face
     ctx.save()

@@ -17,7 +17,7 @@ Un quart de tour s’écrit `U`. L’inverse s’écrit `U'`. Le demi-tour s’�
 | **Clic droit** maintenu, puis glisser | Tourner autour du cube, même si le pointeur part d’un cubie. |
 | **Molette** | Zoomer. |
 
-Le cubie entier est sensible, pas seulement la pastille de couleur. Glissez dans le sens où la couche doit partir : horizontalement pour une couche du haut ou du bas, verticalement pour une couche de côté.
+Le cubie entier est sensible, pas seulement la pastille de couleur. Glissez dans le sens où la couche doit partir : horizontalement pour une couche du haut ou du bas, verticalement pour une couche de côté. Une arête entre deux colonnes tourne la tranche du milieu.
 
 ---
 

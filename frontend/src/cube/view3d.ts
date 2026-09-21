@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
-import { FACE_HEX, FACE_TWIST, type Axis, type Face, type ParsedMove } from './notation'
+import { FACE_HEX, FACE_TWIST, MOVE_TWIST, type Axis, type Face, type MoveFace, type ParsedMove } from './notation'
 
 const STEP = 1.05
 const CUBIE = 0.96
@@ -17,7 +17,7 @@ type Anim =
   | {
       mode: 'auto' | 'settle'
       axis: Axis
-      layer: -1 | 0 | 1
+      layer: -1 | 0 | 1 | null
       from: number
       target: number
       t0: number
@@ -134,7 +134,7 @@ export class CubeView {
   }
 
   beginDrag(axis: Axis, layer: -1 | 0 | 1) {
-    if (this.anim || layer === 0) return false
+    if (this.anim) return false
     this.controls.enabled = false
     this.orbitFrozen = true
     const ids = this.idsOn(axis, layer)
@@ -213,7 +213,6 @@ export class CubeView {
     let axis: Axis | null = null
     let best = 0.2
     for (const candidate of [0, 1, 2] as Axis[]) {
-      if (Math.round(cubie.grid.getComponent(candidate)) === 0) continue
       const score = Math.abs(rot.getComponent(candidate))
       if (score > best) {
         best = score
@@ -221,7 +220,7 @@ export class CubeView {
       }
     }
     if (axis === null) return null
-    const layer = Math.round(cubie.grid.getComponent(axis)) as -1 | 1
+    const layer = Math.round(cubie.grid.getComponent(axis)) as -1 | 0 | 1
     const tangent = new THREE.Vector3().crossVectors(AXIS_VEC[axis], cubie.grid)
     if (tangent.lengthSq() < 1e-6) tangent.crossVectors(AXIS_VEC[axis], n)
     tangent.normalize()
@@ -270,7 +269,7 @@ export class CubeView {
   }
 
   private startAuto(move: ParsedMove) {
-    const spec = FACE_TWIST[move.face]
+    const spec = MOVE_TWIST[move.face]
     const target = spec.dir * move.turns * 90
     const ids = this.idsOn(spec.axis, spec.layer)
     this.orbitFrozen = true
@@ -298,7 +297,8 @@ export class CubeView {
     this.paintLayer(a.axis, a.ids, deg)
     if (t < 1) return
     const user = a.mode !== 'auto'
-    let notation = a.mode === 'auto' ? (a.notation ?? null) : this.notationFrom(a.axis, a.layer, a.target)
+    let notation =
+      a.mode === 'auto' ? (a.notation ?? null) : a.layer === null ? null : this.notationFrom(a.axis, a.layer, a.target)
     let bake = a.target
     if (user && bake !== 0 && !notation) bake = 0
     this.bakeLayer(a.axis, a.ids, bake)
@@ -312,8 +312,8 @@ export class CubeView {
   private notationFrom(axis: Axis, layer: -1 | 0 | 1, targetDeg: number): string | null {
     const turns = Math.round(targetDeg / 90)
     if (!turns) return null
-    for (const [face, spec] of Object.entries(FACE_TWIST) as [Face, (typeof FACE_TWIST)[Face]][]) {
-      if (spec.axis !== axis || spec.layer !== layer) continue
+    for (const [face, spec] of Object.entries(MOVE_TWIST) as [MoveFace, (typeof MOVE_TWIST)[MoveFace]][]) {
+      if (spec.layer === null || spec.axis !== axis || spec.layer !== layer) continue
       const q = turns / spec.dir
       if (q === 1) return face
       if (q === -1) return `${face}'`
@@ -322,7 +322,8 @@ export class CubeView {
     return null
   }
 
-  private idsOn(axis: Axis, layer: number) {
+  private idsOn(axis: Axis, layer: number | null) {
+    if (layer === null) return this.cubies.map((_, i) => i)
     const ids: number[] = []
     this.cubies.forEach((c, i) => {
       if (Math.round(c.grid.getComponent(axis)) === layer) ids.push(i)
@@ -355,12 +356,12 @@ export class CubeView {
     }
   }
 
-  private twist(face: Face, turns: number, animate: boolean) {
+  private twist(face: MoveFace, turns: number, animate: boolean) {
     if (animate) {
       this.enqueue({ face, turns, notation: `${face}${turns === -1 ? "'" : turns === 2 ? '2' : ''}` })
       return
     }
-    const spec = FACE_TWIST[face]
+    const spec = MOVE_TWIST[face]
     this.bakeLayer(spec.axis, this.idsOn(spec.axis, spec.layer), spec.dir * turns * 90)
   }
 

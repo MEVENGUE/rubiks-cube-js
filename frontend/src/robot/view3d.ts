@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
-import { FACE_HEX, FACE_TWIST, type Axis, type Face, type ParsedMove } from '../cube/notation'
+import { FACE_HEX, MOVE_TWIST, type Axis, type Face, type MoveFace, type ParsedMove } from '../cube/notation'
 
 const STEP = 1.05
 const CUBIE = 0.96
@@ -165,7 +165,7 @@ export class RobotView {
   private kick() {
     if (this.anim || this.queue.length === 0) return
     const move = this.queue.shift()!
-    const spec = FACE_TWIST[move.face]
+    const spec = MOVE_TWIST[move.face]
     const target = spec.dir * move.turns * 90
     const backlog = this.queue.length
     const base = Math.abs(move.turns) === 2 ? 360 : 260
@@ -206,7 +206,8 @@ export class RobotView {
     this.wrist.rotation.z = Math.sin(t * 0.9) * 0.05
   }
 
-  private idsOn(axis: Axis, layer: number) {
+  private idsOn(axis: Axis, layer: number | null) {
+    if (layer === null) return this.cubies.map((_, i) => i)
     const ids: number[] = []
     this.cubies.forEach((c, i) => {
       if (Math.round(c.grid.getComponent(axis)) === layer) ids.push(i)
@@ -239,8 +240,8 @@ export class RobotView {
     }
   }
 
-  private twist(face: Face, turns: number) {
-    const spec = FACE_TWIST[face]
+  private twist(face: MoveFace, turns: number) {
+    const spec = MOVE_TWIST[face]
     this.bakeLayer(spec.axis, this.idsOn(spec.axis, spec.layer), spec.dir * turns * 90)
   }
 

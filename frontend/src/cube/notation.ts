@@ -1,6 +1,14 @@
 export const FACES = ['U', 'R', 'F', 'D', 'L', 'B'] as const
 export type Face = (typeof FACES)[number]
 
+export const SLICES = ['M', 'E', 'S'] as const
+export type Slice = (typeof SLICES)[number]
+
+export const ROTATIONS = ['x', 'y', 'z'] as const
+export type Rotation = (typeof ROTATIONS)[number]
+
+export type MoveFace = Face | Slice | Rotation
+
 export const FACE_HEX: Record<Face, string> = {
   U: '#f4f1ea',
   R: '#c62828',
@@ -24,12 +32,27 @@ export const FACE_TWIST: Record<Face, { axis: Axis; layer: -1 | 0 | 1; dir: numb
   B: { axis: 2, layer: -1, dir: 1 },
 }
 
-export type ParsedMove = { face: Face; turns: number; notation: string }
+/** Couche externe, tranche du milieu, ou rotation du cube entier. `layer: null` = les 3 couches. */
+export const MOVE_TWIST: Record<MoveFace, { axis: Axis; layer: -1 | 0 | 1 | null; dir: number }> = {
+  ...FACE_TWIST,
+  M: { axis: 0, layer: 0, dir: 1 },
+  E: { axis: 1, layer: 0, dir: 1 },
+  S: { axis: 2, layer: 0, dir: -1 },
+  x: { axis: 0, layer: null, dir: -1 },
+  y: { axis: 1, layer: null, dir: -1 },
+  z: { axis: 2, layer: null, dir: -1 },
+}
+
+export type ParsedMove = { face: MoveFace; turns: number; notation: string }
+
+export function isOuterFace(face: MoveFace): face is Face {
+  return (FACES as readonly string[]).includes(face)
+}
 
 export function parseMove(token: string): ParsedMove | null {
-  const m = token.trim().match(/^([URFDLB])([2']?)$/)
+  const m = token.trim().match(/^([URFDLBMESxyz])([2']?)$/)
   if (!m) return null
-  const face = m[1] as Face
+  const face = m[1] as MoveFace
   const turns = m[2] === "'" ? -1 : m[2] === '2' ? 2 : 1
   return { face, turns, notation: token.trim() }
 }

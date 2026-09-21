@@ -1,77 +1,87 @@
 import Cube from 'cubejs/lib/cube.js'
-import { type Face, type ParsedMove } from '../cube/notation'
+import { MOVE_TWIST, type Face, type ParsedMove } from '../cube/notation'
 
-const U = 0, R = 9, F = 18, D = 27, L = 36, B = 45
+const ORDER = 'URFDLB'
 
-function cycle<T>(arr: T[], ...idx: number[]) {
-  if (idx.length < 2) return
-  const vals = idx.map((i) => arr[i])
-  for (let i = 0; i < idx.length; i++) arr[idx[(i + 1) % idx.length]] = vals[i]
+type Vec = [number, number, number]
+
+function rotate(axis: 0 | 1 | 2, deg: number, v: Vec): Vec {
+  const t = (deg * Math.PI) / 180
+  const c = Math.cos(t)
+  const s = Math.sin(t)
+  const [x, y, z] = v
+  if (axis === 0) return [x, y * c - z * s, y * s + z * c]
+  if (axis === 1) return [x * c + z * s, y, -x * s + z * c]
+  return [x * c - y * s, x * s + y * c, z]
 }
 
-function spinCW<T>(arr: T[], o: number) {
-  cycle(arr, o + 0, o + 2, o + 8, o + 6)
-  cycle(arr, o + 1, o + 5, o + 7, o + 3)
+function roundVec(v: Vec): Vec {
+  return [Math.round(v[0]), Math.round(v[1]), Math.round(v[2])]
 }
 
-function quarterCW<T>(arr: T[], face: Face) {
-  switch (face) {
-    case 'U':
-      spinCW(arr, U)
-      cycle(arr, R + 0, F + 0, L + 0, B + 0)
-      cycle(arr, R + 1, F + 1, L + 1, B + 1)
-      cycle(arr, R + 2, F + 2, L + 2, B + 2)
-      break
-    case 'D':
-      spinCW(arr, D)
-      cycle(arr, F + 6, R + 6, B + 6, L + 6)
-      cycle(arr, F + 7, R + 7, B + 7, L + 7)
-      cycle(arr, F + 8, R + 8, B + 8, L + 8)
-      break
-    case 'R':
-      spinCW(arr, R)
-      cycle(arr, F + 2, U + 2, B + 0, D + 2)
-      cycle(arr, F + 5, U + 5, B + 3, D + 5)
-      cycle(arr, F + 8, U + 8, B + 6, D + 8)
-      break
-    case 'L':
-      spinCW(arr, L)
-      cycle(arr, B + 2, U + 0, F + 0, D + 0)
-      cycle(arr, B + 5, U + 3, F + 3, D + 3)
-      cycle(arr, B + 8, U + 6, F + 6, D + 6)
-      break
-    case 'F':
-      spinCW(arr, F)
-      cycle(arr, U + 6, R + 0, D + 0, L + 8)
-      cycle(arr, U + 7, R + 3, D + 1, L + 5)
-      cycle(arr, U + 8, R + 6, D + 2, L + 2)
-      break
-    case 'B':
-      spinCW(arr, B)
-      cycle(arr, R + 2, U + 0, L + 0, D + 8)
-      cycle(arr, R + 5, U + 1, L + 3, D + 7)
-      cycle(arr, R + 8, U + 2, L + 6, D + 6)
-      break
-  }
+const FACE_GEOM: Record<Face, { n: Vec; pos: (row: number, col: number) => Vec; slot: (p: Vec) => number }> = {
+  U: {
+    n: [0, 1, 0],
+    pos: (row, col) => [col - 1, 1, row - 1],
+    slot: (p) => (Math.round(p[2]) + 1) * 3 + (Math.round(p[0]) + 1),
+  },
+  R: {
+    n: [1, 0, 0],
+    pos: (row, col) => [1, 1 - row, 1 - col],
+    slot: (p) => (1 - Math.round(p[1])) * 3 + (1 - Math.round(p[2])),
+  },
+  F: {
+    n: [0, 0, 1],
+    pos: (row, col) => [col - 1, 1 - row, 1],
+    slot: (p) => (1 - Math.round(p[1])) * 3 + (Math.round(p[0]) + 1),
+  },
+  D: {
+    n: [0, -1, 0],
+    pos: (row, col) => [col - 1, -1, 1 - row],
+    slot: (p) => (1 - Math.round(p[2])) * 3 + (Math.round(p[0]) + 1),
+  },
+  L: {
+    n: [-1, 0, 0],
+    pos: (row, col) => [-1, 1 - row, col - 1],
+    slot: (p) => (1 - Math.round(p[1])) * 3 + (Math.round(p[2]) + 1),
+  },
+  B: {
+    n: [0, 0, -1],
+    pos: (row, col) => [1 - col, 1 - row, -1],
+    slot: (p) => (1 - Math.round(p[1])) * 3 + (1 - Math.round(p[0])),
+  },
 }
 
-function identityPerm() {
-  return Array.from({ length: 54 }, (_, i) => i)
+function faceOf(normal: Vec): Face {
+  const n = roundVec(normal)
+  const found = (Object.keys(FACE_GEOM) as Face[]).find((face) =>
+    FACE_GEOM[face].n.every((v, k) => v === n[k]),
+  )
+  if (!found) throw new Error('normale inconnue')
+  return found
 }
 
+/** Index d’origine de chaque facette après le coup. */
 export function sourcesForMove(move: ParsedMove): number[] {
-  const perm = identityPerm()
-  const n = move.turns === 2 ? 2 : 1
-  for (let k = 0; k < n; k++) {
-    if (move.turns === -1) {
-      quarterCW(perm, move.face)
-      quarterCW(perm, move.face)
-      quarterCW(perm, move.face)
-    } else {
-      quarterCW(perm, move.face)
+  const spec = MOVE_TWIST[move.face]
+  const deg = spec.dir * move.turns * 90
+  const src = Array.from({ length: 54 }, (_, i) => i)
+  for (const face of ORDER) {
+    const geom = FACE_GEOM[face as Face]
+    for (let i = 0; i < 9; i++) {
+      const cubie = geom.pos(Math.floor(i / 3), i % 3)
+      let pos: Vec = cubie
+      let normal = geom.n
+      if (spec.layer === null || Math.round(cubie[spec.axis]) === spec.layer) {
+        pos = rotate(spec.axis, deg, cubie)
+        normal = rotate(spec.axis, deg, geom.n)
+      }
+      const destFace = faceOf(normal)
+      const dest = ORDER.indexOf(destFace) * 9 + FACE_GEOM[destFace].slot(roundVec(pos))
+      src[dest] = ORDER.indexOf(face) * 9 + i
     }
   }
-  return perm
+  return src
 }
 
 export function applyFacelets(facelets: string, notation: string): string {

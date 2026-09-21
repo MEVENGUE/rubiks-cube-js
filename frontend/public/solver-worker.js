@@ -11,8 +11,12 @@ self.onmessage = function (e) {
   if (msg.type === 'solve') {
     try {
       const cube = Cube.fromString(msg.facelets)
-      const solution = cube.solve()
-      postMessage({ type: 'solution', solution: solution || '', id: msg.id })
+      const solution = cube.solve() || ''
+      const settled = Cube.fromString(msg.facelets)
+      if (solution) settled.move(solution)
+      const upright = settled.upright() || ''
+      const alg = [solution, upright].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
+      postMessage({ type: 'solution', solution: alg, id: msg.id })
     } catch (err) {
       postMessage({
         type: 'error',
