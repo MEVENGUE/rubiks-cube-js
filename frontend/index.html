@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rubik Graph — cube 3D & théorie des graphes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <h1>Rubik Graph</h1>
+            <p>Cube 3D manipulable · projection graphe · chemin de Kociemba</p>
+          </div>
+        </div>
+        <div class="top-status">
+          <span id="solved-pill" class="pill">résolu</span>
+          <span id="move-pill" class="pill muted">0 coups</span>
+          <span id="gesture-pill" class="pill muted">gestes off</span>
+          <button type="button" id="btn-about" class="about-btn">Contact</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="stage" id="stage">
+          <canvas id="cube-canvas"></canvas>
+          <div id="cursor" class="cursor hidden"></div>
+          <div class="stage-hud">
+            <div class="hint" id="hint">
+              Glissez une facette pour tourner une couche · fond pour orbiter · R L U D F B
+            </div>
+            <div class="cam-box" id="cam-box">
+              <video id="webcam" playsinline muted></video>
+              <canvas id="hands-overlay"></canvas>
+              <div class="touchpad" id="touchpad">
+                <span>GESTURE CONTROL</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="paper">
+          <div class="paper-head">
+            <div class="paper-title-row">
+              <h2 id="panel-title">Théorie des graphes</h2>
+              <div class="view-tabs" role="tablist" aria-label="Vue du panneau">
+                <button type="button" role="tab" id="tab-graph" aria-selected="true">Graphe</button>
+                <button type="button" role="tab" id="tab-robot" aria-selected="false">Robot</button>
+              </div>
+            </div>
+            <p id="panel-copy">
+              Chaque point est une facette. Les cercles concentriques sont les
+              orbites d’un mouvement — la même idée que
+              <em>Solving a Rubik’s Cube with graph theory</em>.
+            </p>
+          </div>
+          <div class="viz-stage" id="viz-stage">
+            <canvas id="graph-canvas" class="viz-canvas is-active"></canvas>
+            <canvas id="robot-canvas" class="viz-canvas"></canvas>
+            <div class="robot-hud" id="robot-hud" hidden>
+              <div>
+                <span class="robot-kicker">ACTION</span>
+                <strong id="robot-action">Repos</strong>
+              </div>
+              <a
+                class="robot-link"
+                href="https://dex-rubik-cube.yanjieze.com/"
+                target="_blank"
+                rel="noreferrer"
+                >Dexterous Cube Solving · Yanjie Ze</a
+              >
+            </div>
+          </div>
+          <div class="solution">
+            <div class="solution-head">
+              <div>
+                <h3>Chemin vers l’identité</h3>
+                <p class="cayley">
+                  Graphe de Cayley · chaque arête est un coup jusqu’à l’identité
+                </p>
+              </div>
+              <div class="solution-meta">
+                <span id="solver-state">Solveur en préparation…</span>
+                <span id="sol-progress">—</span>
+              </div>
+            </div>
+            <div class="path-wrap">
+              <div class="path" id="path"></div>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <div class="progress-fill" id="sol-bar"></div>
+            </div>
+            <div class="transport">
+              <button type="button" id="btn-back" class="icon-btn" disabled title="Reculer d’un coup">Retour</button>
+              <button type="button" id="btn-step" class="icon-btn" disabled title="Avancer d’un coup">Pas à pas</button>
+              <button type="button" id="btn-play" class="icon-btn play" disabled>Lire</button>
+              <button type="button" id="btn-stop" class="icon-btn" disabled>Stop</button>
+              <button type="button" id="btn-robot-solve" class="icon-btn robot">
+                Le robot résout
+              </button>
+            </div>
+          </div>
+        </aside>
+      </main>
+
+      <footer class="toolbar">
+        <div class="cluster">
+          <button type="button" id="btn-scramble" class="primary">Mélanger</button>
+          <button type="button" id="btn-reset">Reset</button>
+          <button type="button" id="btn-solve">Résoudre</button>
+        </div>
+        <div class="cluster moves" id="move-buttons">
+          <button type="button" data-move="U">U</button>
+          <button type="button" data-move="U'">U'</button>
+          <button type="button" data-move="R">R</button>
+          <button type="button" data-move="R'">R'</button>
+          <button type="button" data-move="F">F</button>
+          <button type="button" data-move="F'">F'</button>
+          <button type="button" data-move="D">D</button>
+          <button type="button" data-move="D'">D'</button>
+          <button type="button" data-move="L">L</button>
+          <button type="button" data-move="L'">L'</button>
+          <button type="button" data-move="B">B</button>
+          <button type="button" data-move="B'">B'</button>
+        </div>
+        <div class="cluster">
+          <button type="button" id="btn-camera">Activer la caméra</button>
+          <button type="button" id="btn-swap" hidden>Inverser L/R</button>
+        </div>
+      </footer>
+    </div>
+
+    <div id="about-overlay" class="about-overlay" hidden>
+      <div
+        class="about-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="about-title"
+      >
+        <header class="about-head">
+          <div>
+            <p class="about-kicker">Rubik Graph</p>
+            <h2 id="about-title">Contact &amp; sources</h2>
+          </div>
+          <button type="button" id="btn-about-close" class="about-close" aria-label="Fermer">
+            Fermer
+          </button>
+        </header>
+
+        <div class="about-body">
+          <section class="about-contact" aria-labelledby="contact-heading">
+            <h3 id="contact-heading">MEVENGUE Franck</h3>
+            <p class="about-role">
+              Étudiant Master <strong>Architecture Cloud, Systèmes &amp; Réseaux</strong>
+              @
+              <a href="https://www.supinfo.com/" target="_blank" rel="noreferrer">SUPINFO Paris</a>
+              · Ingénieur SI @
+              <a href="https://www.ecam-epmi.fr/" target="_blank" rel="noreferrer">ECAM-EPMI</a>
+            </p>
+            <p class="about-pitch">
+              Je conçois des infrastructures fiables, j’automatise les déploiements et
+              j’explore l’IA appliquée — du code à la production. Cette app réunit
+              cube 3D, théorie des graphes, solveur Kociemba et gestes webcam.
+            </p>
+            <p class="about-meta">Paris, France · disponible pour alternance, stage ou mission (Cloud · DevOps · Sécurité · IA)</p>
+            <div class="about-links">
+              <a href="https://mevenguefranck-siteweb.vercel.app/" target="_blank" rel="noreferrer">Portfolio</a>
+              <a href="https://github.com/MEVENGUE" target="_blank" rel="noreferrer">GitHub</a>
+              <a href="https://mevengue.github.io/" target="_blank" rel="noreferrer">Profil GitHub</a>
+              <a href="mailto:mevengueengofranck@gmail.com">Email</a>
+              <a href="https://deepwiki.com/MEVENGUE/MEVENGUE" target="_blank" rel="noreferrer">DeepWiki</a>
+            </div>
+          </section>
+
+          <section class="about-sources" aria-labelledby="sources-heading">
+            <h3 id="sources-heading">Sources d’inspiration</h3>
+            <p class="about-lead">
+              Rubik Graph n’est pas une copie d’un dépôt unique : il réécrit en JavaScript
+              plusieurs idées (geste, graphe, solveur, robot) et s’appuie sur des bibliothèques
+              open source.
+            </p>
+
+            <h4>Applications et démos</h4>
+            <ul>
+              <li>
+                <a href="https://github.com/Parth-fintech/Gesture-Recognition-for-Rubik-s-Cube-" target="_blank" rel="noreferrer">Gesture-Recognition-for-Rubik’s-Cube</a>
+                — main gauche = orbite, main droite = viser + pincer.
+              </li>
+              <li>
+                <a href="https://www.reddit.com/r/educationalgifs/comments/127enam/2d_representation_of_a_rubiks_cube_help/" target="_blank" rel="noreferrer">Représentation 2D en cercles</a>
+                ·
+                <a href="https://www.youtube.com/watch?v=MOWYDw98Pd4" target="_blank" rel="noreferrer">version plus fluide</a>
+                — orbites U / F / R, stickers aux intersections.
+              </li>
+              <li>
+                <a href="https://github.com/guiguilhermegui/Hobby_Rubiks-Cube-Circles-2d-Projection-Group-Graph-Theory" target="_blank" rel="noreferrer">Hobby Rubik’s Cube Circles 2D Projection</a>
+                — le GIF Reddit comme graphe de facettes sur des cercles.
+              </li>
+              <li>
+                <a href="https://dex-rubik-cube.yanjieze.com/" target="_blank" rel="noreferrer">Dexterous Cube Solving</a>
+                (Yanjie Ze) — bras qui tient le cube et rejoue la solution.
+              </li>
+            </ul>
+
+            <h4>Mathématiques et algorithmes</h4>
+            <ul>
+              <li>
+                <a href="https://medium.com/@ricdonati/solving-a-rubiks-cube-using-graph-theory-6724e9ba68ce" target="_blank" rel="noreferrer">Solving a Rubik’s Cube Using Graph Theory</a>
+                (Ric Donati) — graphe de Cayley, chemin vers l’identité.
+              </li>
+              <li>
+                <a href="https://yetanothermathblog.com/permutation-puzzles/lecture-notes-on-the-rubiks-cube/rubiks-cube-notes-cayley-graphs-and-gods-algorithm/" target="_blank" rel="noreferrer">Cayley graphs &amp; God’s algorithm</a>
+                — distance dans le graphe = longueur de solution.
+              </li>
+              <li>
+                <a href="https://kociemba.org/cube.htm" target="_blank" rel="noreferrer">Herbert Kociemba — Two-Phase Algorithm</a>
+                ·
+                <a href="https://kociemba.org/math/twophase.htm" target="_blank" rel="noreferrer">détail mathématique</a>
+                — solveur réel (~20 coups).
+              </li>
+              <li>
+                David Singmaster, <em>Notes on Rubik’s Magic Cube</em> — notation
+                <code>U R F D L B</code> et suffixes <code>'</code> / <code>2</code>.
+              </li>
+            </ul>
+
+            <h4>Bibliothèques</h4>
+            <ul>
+              <li>
+                <a href="https://github.com/ldez/cubejs" target="_blank" rel="noreferrer">cubejs</a>
+                (npm,
+                <a href="https://www.npmjs.com/package/cubejs" target="_blank" rel="noreferrer">paquet</a>,
+                auteur original
+                <a href="http://www.digip.org/about/" target="_blank" rel="noreferrer">akheron</a>)
+                — modèle 3×3 et solveur Kociemba JS.
+              </li>
+              <li>
+                <a href="https://threejs.org/" target="_blank" rel="noreferrer">Three.js</a>
+                —
+                <a href="https://threejs.org/docs/#examples/en/controls/OrbitControls" target="_blank" rel="noreferrer">OrbitControls</a>,
+                <a href="https://threejs.org/docs/#examples/en/geometries/RoundedBoxGeometry" target="_blank" rel="noreferrer">RoundedBoxGeometry</a>.
+              </li>
+              <li>
+                <a href="https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker" target="_blank" rel="noreferrer">MediaPipe Hand Landmarker</a>
+                —
+                <a href="https://www.npmjs.com/package/@mediapipe/tasks-vision" target="_blank" rel="noreferrer">@mediapipe/tasks-vision</a>.
+              </li>
+              <li>
+                <a href="https://vite.dev/guide/" target="_blank" rel="noreferrer">Vite</a>
+                — bundler, HMR et worker.
+              </li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
