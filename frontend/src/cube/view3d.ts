@@ -77,7 +77,12 @@ export class CubeView {
     this.controls.dampingFactor = 0.08
     this.controls.minDistance = 5
     this.controls.maxDistance = 16
-    this.controls.rotateSpeed = 0.72
+    const coarse = matchMedia('(pointer: coarse)').matches
+    this.controls.rotateSpeed = coarse ? 1.15 : 0.9
+    this.controls.zoomSpeed = coarse ? 1.2 : 1
+    this.controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE
+    this.controls.touches.ONE = THREE.TOUCH.ROTATE
+    this.controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE
 
     const amb = new THREE.AmbientLight(0xffffff, 0.72)
     const key = new THREE.DirectionalLight(0xfff4e8, 1.05)
@@ -150,7 +155,7 @@ export class CubeView {
   settleDrag() {
     if (!this.anim || this.anim.mode !== 'drag') return
     const a = this.anim.angle
-    const target = Math.abs(a) >= 45 ? 90 * Math.sign(a) : 0
+    const target = Math.abs(a) >= 28 ? 90 * Math.sign(a) : 0
     this.anim = {
       mode: 'settle',
       axis: this.anim.axis,
@@ -163,12 +168,21 @@ export class CubeView {
     }
   }
 
+  /** Pousse un glisser encore timide pour qu’un geste vif valide le quart de tour. */
+  kickDrag(sign: number) {
+    if (!this.anim || this.anim.mode !== 'drag' || !sign) return
+    const a = this.anim.angle
+    if (Math.abs(a) >= 28 && Math.sign(a) === sign) return
+    this.anim.angle = sign * 36
+  }
+
   hitSticker(clientX: number, clientY: number): { cubie: Cubie; normal: THREE.Vector3; point: THREE.Vector3 } | null {
     const rect = this.renderer.domElement.getBoundingClientRect()
     this.pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1
     this.pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1
     this.raycaster.setFromCamera(this.pointer, this.camera)
-    const hits = this.raycaster.intersectObjects(this.stickerMeshes, false)
+    const targets = this.cubies.flatMap((c) => c.group.children)
+    const hits = this.raycaster.intersectObjects(targets, false)
     const hit = hits[0]
     if (!hit) return null
     const cubie = this.cubies.find((c) => c.group === hit.object.parent)
@@ -204,9 +218,12 @@ export class CubeView {
     if (tangent.lengthSq() < 1e-6) tangent.crossVectors(AXIS_VEC[snapped.axis], n)
     tangent.normalize()
     const screenT = tangent.clone().project(cam)
-    const t2 = new THREE.Vector2(screenT.x, screenT.y)
-    const sign = Math.sign(screenDelta.dot(t2) || snapped.sign)
-    return { axis: snapped.axis, layer, sign, tangentLen: onFace.length() }
+    const rect = this.renderer.domElement.getBoundingClientRect()
+    const dir = new THREE.Vector2(screenT.x * rect.width * 0.5, -screenT.y * rect.height * 0.5)
+    if (dir.lengthSq() < 1e-6) return null
+    dir.normalize()
+    const sign = Math.sign(screenDelta.dot(dir) || snapped.sign)
+    return { axis: snapped.axis, layer, sign, dir }
   }
 
   nudgeOrbit(dx: number, dy: number) {

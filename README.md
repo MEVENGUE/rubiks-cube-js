@@ -19,6 +19,7 @@ Cube 3D  ←→  Graphe d’orbites  ←→  Chemin de Cayley  ←→  Bras mani
 - [Lancer l’app](#lancer-lapp)
 - [Déploiement](#déploiement)
 - [Guide de fonctionnement](#guide-de-fonctionnement)
+- [Souris, tactile et clavier](./docs/utilisation.md)
 - [Raccourcis clavier](#raccourcis-clavier)
 - [Structure du code](#structure-du-code)
 - [Technologies](#technologies)
@@ -158,9 +159,11 @@ npm start
 
 ### 1. Prendre le cube en main
 
-1. À gauche : le cube 3D. Glisser le **fond noir** pour tourner autour, la molette pour zoomer.
-2. Glisser une **pastille de couleur** : la couche part dans le sens du geste, puis s’aligne à 90°.
-3. Ou cliquer `U`, `R'`, `F2`, etc. dans la barre du bas.
+Le détail souris, doigt et clavier est dans **[docs/utilisation.md](./docs/utilisation.md)**.
+
+1. Glisser un **cubie** (toute la face, pas seulement la pastille) : la couche suit le doigt ou la souris, puis s’aligne à 90° dès qu’on a assez poussé. Un petit geste revient en arrière.
+2. Glisser le **fond noir** pour orbiter. **Molette** ou **deux doigts** pour zoomer. **Clic droit** pour orbiter même en partant d’un cubie.
+3. Ou toucher `U`, `R'`, etc. dans la barre du bas — souvent plus simple sur un petit écran.
 4. **Mélanger** pour un scramble, **Reset** pour revenir à l’identité.
 
 Le panneau de droite suit chaque coup : les points du graphe se déplacent sur leurs orbites.
@@ -205,11 +208,13 @@ Dans l’onglet Robot, on peut aussi orbiter la scène à la souris.
 
 ## Raccourcis clavier
 
+Tableau complet, avec la souris et le tactile : **[docs/utilisation.md](./docs/utilisation.md)**.
+
 | Touche | Action |
 | --- | --- |
 | `U` `R` `F` `D` `L` `B` | Quart de tour horaire |
 | `Shift` + la même lettre | Quart de tour inverse (`U'`, `R'`, …) |
-| `←` | Reculer d’un coup de la solution |
+| `←` | Revoir le coup précédent de la solution |
 | `→` | Avancer d’un coup de la solution |
 | `S` | Mélanger |
 | `Z` | Reset |

@@ -420,18 +420,54 @@ window.addEventListener('keydown', (e) => {
   startTurn(parsed)
 })
 
+const HINT_IDLE =
+  'Glissez un cubie pour tourner sa couche · le fond pour orbiter · deux doigts ou la molette pour zoomer'
+
 type PointerDrag = {
+  pointerId: number
   startX: number
   startY: number
   lastX: number
   lastY: number
+  lastT: number
   hit: NonNullable<ReturnType<CubeView['hitSticker']>>
   locked: boolean
+  sign: number
+  dir: THREE.Vector2 | null
 }
 let pointerDrag: PointerDrag | null = null
+const activePointers = new Set<number>()
+
+function releaseTurn(commit: boolean, flickSign = 0) {
+  if (pointerDrag?.locked) {
+    if (commit) {
+      if (flickSign) view.kickDrag(flickSign)
+      view.settleDrag()
+    } else {
+      view.updateDrag(0)
+      view.settleDrag()
+    }
+  }
+  if (pointerDrag) {
+    try {
+      canvas.releasePointerCapture(pointerDrag.pointerId)
+    } catch {
+      /* le pointeur a déjà été relâché */
+    }
+  }
+  pointerDrag = null
+  view.holdOrbit = false
+  canvas.classList.remove('dragging')
+}
 
 canvas.addEventListener('pointerdown', (e) => {
+  activePointers.add(e.pointerId)
+  if (activePointers.size > 1) {
+    releaseTurn(false)
+    return
+  }
   if (view.busy) return
+  if (e.pointerType === 'mouse' && e.button !== 0) return
   const hit = view.hitSticker(e.clientX, e.clientY)
   if (!hit) return
   e.stopPropagation()
@@ -440,56 +476,72 @@ canvas.addEventListener('pointerdown', (e) => {
   view.holdOrbit = true
   view.controls.enabled = false
   pointerDrag = {
+    pointerId: e.pointerId,
     startX: e.clientX,
     startY: e.clientY,
     lastX: e.clientX,
     lastY: e.clientY,
+    lastT: performance.now(),
     hit,
     locked: false,
+    sign: 1,
+    dir: null,
   }
 })
 
 canvas.addEventListener('pointermove', (e) => {
-  if (!pointerDrag) return
+  if (!pointerDrag || e.pointerId !== pointerDrag.pointerId) return
+  if (activePointers.size > 1) return
   const dx = e.clientX - pointerDrag.startX
   const dy = e.clientY - pointerDrag.startY
+  const now = performance.now()
   if (!pointerDrag.locked) {
-    if (Math.hypot(dx, dy) < 12) return
+    const lockPx = e.pointerType === 'mouse' ? 5 : 8
+    if (Math.hypot(dx, dy) < lockPx) return
     const picked = view.dragAxisFrom(
       pointerDrag.hit.normal,
       new THREE.Vector2(dx, dy),
       pointerDrag.hit.cubie,
     )
-    if (!picked) return
-    if (!view.beginDrag(picked.axis, picked.layer)) return
+    if (!picked || !view.beginDrag(picked.axis, picked.layer)) {
+      releaseTurn(false)
+      return
+    }
     pointerDrag.locked = true
+    pointerDrag.sign = picked.sign || 1
+    pointerDrag.dir = picked.dir
   }
-  const stepX = e.clientX - pointerDrag.lastX
-  const stepY = e.clientY - pointerDrag.lastY
   pointerDrag.lastX = e.clientX
   pointerDrag.lastY = e.clientY
-  const picked = view.dragAxisFrom(
-    pointerDrag.hit.normal,
-    new THREE.Vector2(e.clientX - pointerDrag.startX, e.clientY - pointerDrag.startY),
-    pointerDrag.hit.cubie,
-  )
-  if (!picked) return
-  const angle = (e.clientX - pointerDrag.startX) * 0.45 + (e.clientY - pointerDrag.startY) * 0.15
-  void stepX
-  void stepY
-  view.updateDrag(angle * (picked.sign || 1) * 0.35)
+  pointerDrag.lastT = now
+  if (!pointerDrag.dir) return
+  const pixels = new THREE.Vector2(dx, dy).dot(pointerDrag.dir) * pointerDrag.sign
+  const per90 = e.pointerType === 'mouse' ? 78 : 62
+  view.updateDrag((pixels / per90) * 90)
 })
 
-function endPointer() {
-  if (!pointerDrag) return
-  if (pointerDrag.locked) view.settleDrag()
-  pointerDrag = null
-  view.holdOrbit = false
-  canvas.classList.remove('dragging')
+function endPointer(e: PointerEvent) {
+  activePointers.delete(e.pointerId)
+  if (!pointerDrag || e.pointerId !== pointerDrag.pointerId) return
+  let flick = 0
+  if (pointerDrag.locked && pointerDrag.dir) {
+    const dt = Math.max(16, performance.now() - pointerDrag.lastT)
+    const speed =
+      new THREE.Vector2(e.clientX - pointerDrag.lastX, e.clientY - pointerDrag.lastY).dot(
+        pointerDrag.dir,
+      ) *
+      pointerDrag.sign /
+      dt
+    if (Math.abs(speed) > 0.4) flick = Math.sign(speed)
+  }
+  releaseTurn(true, flick)
 }
 
 canvas.addEventListener('pointerup', endPointer)
-canvas.addEventListener('pointercancel', endPointer)
+canvas.addEventListener('pointercancel', (e) => {
+  activePointers.delete(e.pointerId)
+  if (pointerDrag && e.pointerId === pointerDrag.pointerId) releaseTurn(false)
+})
 
 btnCamera.addEventListener('click', async () => {
   if (cameraOn) {
@@ -500,7 +552,7 @@ btnCamera.addEventListener('click', async () => {
     btnSwap.hidden = true
     gesturePill.textContent = 'gestes off'
     cursorEl.classList.add('hidden')
-    hint.textContent = 'Glissez une facette pour tourner une couche · fond pour orbiter · R L U D F B'
+    hint.textContent = HINT_IDLE
     return
   }
   try {
