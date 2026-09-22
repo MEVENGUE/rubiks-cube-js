@@ -28,6 +28,7 @@
           <span id="solved-pill" class="pill">résolu</span>
           <span id="move-pill" class="pill muted">0 coups</span>
           <span id="gesture-pill" class="pill muted">gestes off</span>
+          <button type="button" id="btn-help" class="about-btn">Guide</button>
           <button type="button" id="btn-about" class="about-btn">Contact</button>
         </div>
       </header>
@@ -260,6 +261,101 @@
                 <a href="https://vite.dev/guide/" target="_blank" rel="noreferrer">Vite</a>
                 — bundler, HMR et worker.
               </li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div id="help-overlay" class="about-overlay" hidden>
+      <div
+        class="about-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="help-title"
+      >
+        <header class="about-head">
+          <div>
+            <p class="about-kicker">Rubik Graph</p>
+            <h2 id="help-title">Guide d’utilisation</h2>
+          </div>
+          <button type="button" id="btn-help-close" class="about-close" aria-label="Fermer">
+            Fermer
+          </button>
+        </header>
+        <div class="about-body">
+          <p class="about-lead">
+            Souris, doigt et clavier. Même application sur ordinateur, tablette et téléphone.
+          </p>
+
+          <section class="help-section" aria-labelledby="help-new">
+            <h3 id="help-new">🆕 Nouvelle partie</h3>
+            <p class="about-pitch">
+              Avant de lancer ou de modifier une partie, appuyez sur <strong>Reset</strong> (ou <code>Z</code>).
+              Le cube revient résolu et le chemin est effacé. Ensuite : Mélanger, tours à la main, puis Résoudre.
+            </p>
+          </section>
+
+          <section class="help-section" aria-labelledby="help-mouse">
+            <h3 id="help-mouse">🖱️ Souris</h3>
+            <ul class="help-list">
+              <li><span aria-hidden="true">🧩</span><span>Glisser un cubie tourne sa couche. Un court mouvement revient en place, un geste plus long s’aligne à 90°.</span></li>
+              <li><span aria-hidden="true">↔️</span><span>Une arête entre deux colonnes tourne la tranche du milieu.</span></li>
+              <li><span aria-hidden="true">🌑</span><span>Glisser le fond noir tourne autour du cube.</span></li>
+              <li><span aria-hidden="true">🖱️</span><span>Clic droit maintenu, puis glisser : orbite, même en partant d’un cubie.</span></li>
+              <li><span aria-hidden="true">🔍</span><span>Molette : zoom.</span></li>
+            </ul>
+          </section>
+
+          <section class="help-section" aria-labelledby="help-touch">
+            <h3 id="help-touch">👆 Tactile</h3>
+            <ul class="help-list">
+              <li><span aria-hidden="true">☝️</span><span>Un doigt sur un cubie : la couche suit le doigt. Un geste vif valide le quart de tour.</span></li>
+              <li><span aria-hidden="true">🖐️</span><span>Un doigt sur le fond : tourner autour du cube.</span></li>
+              <li><span aria-hidden="true">🤏</span><span>Deux doigts : zoom et orbite. Un tour de couche déjà commencé est annulé.</span></li>
+              <li><span aria-hidden="true">📱</span><span>Sur un petit écran, les boutons U R' F… sont souvent plus fiables que le glisser.</span></li>
+            </ul>
+          </section>
+
+          <section class="help-section" aria-labelledby="help-keys">
+            <h3 id="help-keys">⌨️ Clavier</h3>
+            <p class="about-meta">Les lettres suivent le clavier physique : la touche U lance U, même en AZERTY.</p>
+            <ul class="help-list">
+              <li><span aria-hidden="true">🔤</span><span><code>U</code> <code>R</code> <code>F</code> <code>D</code> <code>L</code> <code>B</code> — quart de tour. Majuscule : l’inverse (<code>U'</code>…).</span></li>
+              <li><span aria-hidden="true">🎲</span><span><code>S</code> — mélanger.</span></li>
+              <li><span aria-hidden="true">↩️</span><span><code>Z</code> — reset, cube résolu.</span></li>
+              <li><span aria-hidden="true">⬅️</span><span><code>←</code> revoit le coup précédent, <code>→</code> joue le suivant.</span></li>
+              <li><span aria-hidden="true">🙌</span><span><code>H</code> — inverse les mains de la webcam.</span></li>
+              <li><span aria-hidden="true">✖️</span><span><code>Échap</code> — ferme ce guide ou Contact.</span></li>
+            </ul>
+          </section>
+
+          <section class="help-section" aria-labelledby="help-buttons">
+            <h3 id="help-buttons">🎛️ Boutons</h3>
+            <ul class="help-list">
+              <li><span aria-hidden="true">🎲</span><span><strong>Mélanger</strong> — 24 coups aléatoires.</span></li>
+              <li><span aria-hidden="true">↩️</span><span><strong>Reset</strong> — cube résolu, chemin effacé.</span></li>
+              <li><span aria-hidden="true">✨</span><span><strong>Résoudre</strong> — chemin de Kociemba, puis lecture.</span></li>
+              <li><span aria-hidden="true">⏪</span><span><strong>Retour</strong>, <strong>Pas à pas</strong>, <strong>Lire</strong>, <strong>Stop</strong> — revoir ou enchaîner la solution. Une pastille du chemin rejoue ce coup.</span></li>
+              <li><span aria-hidden="true">🤖</span><span><strong>Le robot résout</strong> — le bras rejoue le chemin.</span></li>
+            </ul>
+            <p class="about-meta">Chemin : vert déjà joué, orange en cours, crème à venir.</p>
+          </section>
+
+          <section class="help-section" aria-labelledby="help-cam">
+            <h3 id="help-cam">📷 Webcam</h3>
+            <ul class="help-list">
+              <li><span aria-hidden="true">📷</span><span><strong>Activer la caméra</strong> (HTTPS ou localhost). Main gauche ouverte : orbite. Poing : figer.</span></li>
+              <li><span aria-hidden="true">👌</span><span>Main droite : viser une facette, pincer, glisser, relâcher.</span></li>
+              <li><span aria-hidden="true">🔄</span><span><strong>Inverser L/R</strong> si les mains sont inversées.</span></li>
+            </ul>
+          </section>
+
+          <section class="help-section" aria-labelledby="help-stuck">
+            <h3 id="help-stuck">🛠️ Si un coup ne part pas</h3>
+            <ul class="help-list">
+              <li><span aria-hidden="true">📏</span><span>Glisser trop court : la couche revient. Poussez plus loin, ou faites un geste plus vif.</span></li>
+              <li><span aria-hidden="true">🎯</span><span>Recommencez au centre d’une face si le doigt est parti entre deux cubies.</span></li>
+              <li><span aria-hidden="true">⏳</span><span>Pendant une animation, attendez la fin avant le coup suivant.</span></li>
             </ul>
           </section>
         </div>

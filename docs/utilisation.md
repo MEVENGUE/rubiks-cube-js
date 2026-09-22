@@ -56,7 +56,7 @@ Les lettres suivent le clavier physique, pas les symboles AZERTY : la touche **U
 | `←` | Revoir le coup précédent de la solution |
 | `→` | Jouer le coup suivant de la solution |
 | `H` | Inverser les mains gauche / droite (gestes webcam) |
-| `Échap` | Fermer le panneau Contact |
+| `Échap` | Fermer le Guide ou Contact |
 
 Il n’y a pas de touche pour le demi-tour : utilisez le bouton, ou deux quarts de tour.
 
@@ -78,6 +78,7 @@ Il n’y a pas de touche pour le demi-tour : utilisez le bouton, ou deux quarts 
 | Un **coup du chemin** | Cliquez ou touchez une pastille du chemin pour revoir ce mouvement. |
 | **Activer la caméra** | Gestes des mains. **Couper la caméra** les arrête. |
 | **Inverser L/R** | Si la webcam inverse les mains. |
+| **Guide** | Aide : souris, tactile, clavier et boutons. |
 | **Contact** | Auteur et sources. |
 
 Couleurs du chemin : **vert** déjà joué, **orange** coup en cours, **crème** à venir.

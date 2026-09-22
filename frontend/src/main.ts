@@ -41,6 +41,9 @@ const tabRobot = document.querySelector<HTMLButtonElement>('#tab-robot')!
 const btnAbout = document.querySelector<HTMLButtonElement>('#btn-about')!
 const btnAboutClose = document.querySelector<HTMLButtonElement>('#btn-about-close')!
 const aboutOverlay = document.querySelector<HTMLElement>('#about-overlay')!
+const btnHelp = document.querySelector<HTMLButtonElement>('#btn-help')!
+const btnHelpClose = document.querySelector<HTMLButtonElement>('#btn-help-close')!
+const helpOverlay = document.querySelector<HTMLElement>('#help-overlay')!
 const panelTitle = document.querySelector('#panel-title')!
 const panelCopy = document.querySelector('#panel-copy')!
 const robotHud = document.querySelector<HTMLElement>('#robot-hud')!
@@ -384,6 +387,7 @@ tabGraph.addEventListener('click', () => setPanel('graph'))
 tabRobot.addEventListener('click', () => setPanel('robot'))
 
 function openAbout() {
+  helpOverlay.hidden = true
   aboutOverlay.hidden = false
   btnAboutClose.focus()
 }
@@ -394,13 +398,32 @@ function closeAbout() {
   btnAbout.focus()
 }
 
+function openHelp() {
+  aboutOverlay.hidden = true
+  helpOverlay.hidden = false
+  btnHelpClose.focus()
+}
+
+function closeHelp() {
+  if (helpOverlay.hidden) return
+  helpOverlay.hidden = true
+  btnHelp.focus()
+}
+
 btnAbout.addEventListener('click', openAbout)
 btnAboutClose.addEventListener('click', closeAbout)
 aboutOverlay.addEventListener('click', (e) => {
   if (e.target === aboutOverlay) closeAbout()
 })
+btnHelp.addEventListener('click', openHelp)
+btnHelpClose.addEventListener('click', closeHelp)
+helpOverlay.addEventListener('click', (e) => {
+  if (e.target === helpOverlay) closeHelp()
+})
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeAbout()
+  if (e.key !== 'Escape') return
+  if (!helpOverlay.hidden) closeHelp()
+  else closeAbout()
 })
 
 btnRobotSolve.addEventListener('click', () => {
@@ -438,7 +461,7 @@ document.querySelector('#move-buttons')!.addEventListener('click', (e) => {
 
 window.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement) return
-  if (!aboutOverlay.hidden) return
+  if (!aboutOverlay.hidden || !helpOverlay.hidden) return
   const k = e.key
   if (k === 'ArrowLeft') {
     e.preventDefault()

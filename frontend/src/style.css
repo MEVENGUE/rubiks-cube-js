@@ -217,9 +217,30 @@ body { overflow: hidden; }
   line-height: 1.45;
   color: var(--paper-ink);
 }
-.about-sources code {
+.about-sources code,
+.help-section code {
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.8em;
+}
+.help-section {
+  padding: 14px 0 8px;
+  border-bottom: 1px solid var(--line);
+}
+.help-section:last-child { border-bottom: 0; padding-bottom: 0; }
+.help-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 0;
+  list-style: none;
+}
+.help-list li {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .workspace {
