@@ -93,6 +93,67 @@ body { overflow: hidden; }
   color: #fff;
 }
 
+.lang-select {
+  font-family: Figtree, "Noto Sans SC", "Noto Sans JP", "Noto Sans KR", "Noto Naskh Arabic", sans-serif;
+  font-size: 0.78rem;
+  max-width: 9.5rem;
+  padding: 4px 8px;
+  border: 1px solid #3a3530;
+  border-radius: 999px;
+  color: var(--ink);
+  background: #1c1a18;
+}
+
+html[lang="zh"] body,
+html[lang="zh"] h1,
+html[lang="zh"] h2,
+html[lang="zh"] h3,
+html[lang="zh"] h4,
+html[lang="zh"] .about-btn,
+html[lang="zh"] .lang-select,
+html[lang="zh"] .hint,
+html[lang="zh"] .pill {
+  font-family: "Noto Sans SC", Figtree, sans-serif;
+}
+html[lang="ja"] body,
+html[lang="ja"] h1,
+html[lang="ja"] h2,
+html[lang="ja"] h3,
+html[lang="ja"] h4,
+html[lang="ja"] .about-btn,
+html[lang="ja"] .lang-select,
+html[lang="ja"] .hint,
+html[lang="ja"] .pill {
+  font-family: "Noto Sans JP", Figtree, sans-serif;
+}
+html[lang="ko"] body,
+html[lang="ko"] h1,
+html[lang="ko"] h2,
+html[lang="ko"] h3,
+html[lang="ko"] h4,
+html[lang="ko"] .about-btn,
+html[lang="ko"] .lang-select,
+html[lang="ko"] .hint,
+html[lang="ko"] .pill {
+  font-family: "Noto Sans KR", Figtree, sans-serif;
+}
+html[lang="ar"] body,
+html[lang="ar"] h1,
+html[lang="ar"] h2,
+html[lang="ar"] h3,
+html[lang="ar"] h4,
+html[lang="ar"] .about-btn,
+html[lang="ar"] .lang-select,
+html[lang="ar"] .hint,
+html[lang="ar"] .pill {
+  font-family: "Noto Naskh Arabic", Figtree, sans-serif;
+}
+html[dir="rtl"] .moves,
+html[dir="rtl"] .path,
+html[dir="rtl"] .brand h1 {
+  direction: ltr;
+}
+
 .about-overlay {
   position: fixed;
   inset: 0;

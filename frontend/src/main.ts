@@ -6,6 +6,7 @@ import { parseMove, invertMove, isOuterFace } from './cube/notation'
 import { GraphView } from './graph/view'
 import { RobotView } from './robot/view3d'
 import { HandEngine, type Tracked } from './gestures/hands'
+import { initI18n, t, type MsgKey } from './i18n'
 
 const model = new CubeModel()
 const canvas = document.querySelector<HTMLCanvasElement>('#cube-canvas')!
@@ -52,10 +53,16 @@ const solProgress = document.querySelector('#sol-progress')!
 const solBar = document.querySelector<HTMLElement>('#sol-bar')!
 const vizStage = document.querySelector('#viz-stage')!
 
-const COPY_GRAPH =
-  'Chaque point est une facette. Les cercles concentriques sont les orbites d’un mouvement — la même idée que <em>Solving a Rubik’s Cube with graph theory</em>.'
-const COPY_ROBOT =
-  'Un bras manipulateur rejoue le chemin de Kociemba, dans l’esprit de <a href="https://dex-rubik-cube.yanjieze.com/" target="_blank" rel="noreferrer">Dexterous Cube Solving</a> (Yanjie Ze).'
+type SolverNote =
+  | { kind: 'key'; key: MsgKey }
+  | { kind: 'moves'; n: number }
+  | { kind: 'raw'; text: string }
+type RobotLabel = { kind: 'key'; key: MsgKey } | { kind: 'text'; text: string }
+
+let solverNote: SolverNote = { kind: 'key', key: 'solverPreparing' }
+let robotLabel: RobotLabel = { kind: 'key', key: 'robotRest' }
+let panelMode: 'graph' | 'robot' = 'graph'
+let gestureState: 'off' | 'on' | 'denied' = 'off'
 
 const worker = new Worker('/solver-worker.js')
 let solverReady = false
@@ -71,13 +78,13 @@ const hands = new HandEngine(webcam, overlay)
 
 worker.postMessage({ type: 'init' })
 worker.onerror = () => {
-  solverState.textContent = 'erreur solveur'
+  setSolver({ kind: 'key', key: 'solverError' })
 }
 worker.onmessage = (e: MessageEvent) => {
   const msg = e.data
   if (msg.type === 'ready') {
     solverReady = true
-    solverState.textContent = 'Kociemba prêt'
+    setSolver({ kind: 'key', key: 'solverReady' })
     btnSolve.disabled = false
   } else if (msg.type === 'solution') {
     if (typeof msg.id === 'number' && msg.id !== solveTicket) return
@@ -88,22 +95,36 @@ worker.onmessage = (e: MessageEvent) => {
     playing = solution.length > 0
     graph.setFacelets(model.facelets())
     renderPath()
-    solverState.textContent = solution.length
-      ? `${solution.length} coups`
-      : 'déjà résolu'
+    setSolver(
+      solution.length
+        ? { kind: 'moves', n: solution.length }
+        : { kind: 'key', key: 'solverDone' },
+    )
     syncTransport()
     if (playing) issueSolutionMove()
     else refreshHud()
   } else if (msg.type === 'error') {
     if (typeof msg.id === 'number' && msg.id !== solveTicket) return
     solvePending = false
-    solverState.textContent = msg.message
+    setSolver({ kind: 'raw', text: String(msg.message || '') })
   }
 }
 
 btnSolve.disabled = true
 
+function paintSolver() {
+  if (solverNote.kind === 'moves') solverState.textContent = t('solverMoves', { n: solverNote.n })
+  else if (solverNote.kind === 'raw') solverState.textContent = solverNote.text
+  else solverState.textContent = t(solverNote.key)
+}
+
+function setSolver(note: SolverNote) {
+  solverNote = note
+  paintSolver()
+}
+
 function setPanel(mode: 'graph' | 'robot') {
+  panelMode = mode
   const robotOn = mode === 'robot'
   tabGraph.setAttribute('aria-selected', robotOn ? 'false' : 'true')
   tabRobot.setAttribute('aria-selected', robotOn ? 'true' : 'false')
@@ -111,21 +132,22 @@ function setPanel(mode: 'graph' | 'robot') {
   robotCanvas.classList.toggle('is-active', robotOn)
   robotHud.hidden = !robotOn
   robot.active = robotOn
-  panelTitle.textContent = robotOn ? 'Bras manipulateur' : 'Théorie des graphes'
-  panelCopy.innerHTML = robotOn ? COPY_ROBOT : COPY_GRAPH
+  panelTitle.textContent = t(robotOn ? 'panelRobot' : 'panelGraph')
+  panelCopy.innerHTML = t(robotOn ? 'copyRobot' : 'copyGraph')
   graph.resize()
   robot.resize()
 }
 
-function setRobotAction(text: string) {
-  robotAction.textContent = text
+function setRobotAction(label: RobotLabel) {
+  robotLabel = label
+  robotAction.textContent = label.kind === 'text' ? label.text : t(label.key)
 }
 
 function refreshHud() {
   const solved = model.isSolved()
-  solvedPill.textContent = solved ? 'résolu' : 'mélangé'
+  solvedPill.textContent = t(solved ? 'solved' : 'scrambled')
   solvedPill.classList.toggle('ok', solved)
-  movePill.textContent = `${model.moveCount} coups`
+  movePill.textContent = t('moveCount', { n: model.moveCount })
   if (!graph.busy) {
     graph.setFacelets(model.facelets())
     graph.draw()
@@ -144,15 +166,15 @@ function requestSolve() {
   if (!solverReady || view.busy) return false
   if (model.isSolved()) {
     playing = false
-    solverState.textContent = 'déjà résolu'
-    setRobotAction('Résolu')
+    setSolver({ kind: 'key', key: 'solverDone' })
+    setRobotAction({ kind: 'key', key: 'robotSolved' })
     refreshHud()
     syncTransport()
     return false
   }
   const id = ++solveTicket
   solvePending = true
-  solverState.textContent = 'recherche du chemin…'
+  setSolver({ kind: 'key', key: 'solverSearching' })
   graph.setFacelets(model.facelets())
   graph.highlight = null
   graph.draw()
@@ -165,7 +187,7 @@ function startTurn(parsed: ReturnType<typeof parseMove>) {
   graph.playMove(parsed, model.facelets(), moveDuration(parsed))
   view.enqueue(parsed)
   robot.enqueue(parsed)
-  setRobotAction(parsed.notation)
+  setRobotAction({ kind: 'text', text: parsed.notation })
   return true
 }
 
@@ -198,7 +220,7 @@ function renderPath() {
     if (i < solIndex) chip.classList.add('done')
     if (i === solIndex) chip.classList.add('now')
     chip.textContent = tok
-    chip.title = 'Revoir ce coup'
+    chip.title = t('replayMove')
     chip.addEventListener('click', () => replayMoveAt(i))
     pathEl.appendChild(chip)
   })
@@ -221,8 +243,8 @@ function issueSolutionMove(fromPlay = false) {
     playing = false
     if (!model.isSolved() && solveRetries < 2 && solverReady) {
       solveRetries += 1
-      solverState.textContent = 'recalcul…'
-      setRobotAction('Recalcul')
+      setSolver({ kind: 'key', key: 'solverRecalc' })
+      setRobotAction({ kind: 'key', key: 'robotRecalc' })
       solution = []
       solIndex = 0
       pathEl.innerHTML = ''
@@ -242,7 +264,7 @@ function issueSolutionMove(fromPlay = false) {
       graph.setFacelets(model.facelets())
       graph.draw()
     }
-    setRobotAction(model.isSolved() ? 'Résolu' : 'Repos')
+    setRobotAction({ kind: 'key', key: model.isSolved() ? 'robotSolved' : 'robotRest' })
     refreshHud()
     syncTransport()
     return
@@ -306,7 +328,7 @@ view.onCommit = (notation, source) => {
     if (parsed) {
       graph.playMove(parsed, model.facelets(), followDuration(parsed))
       robot.enqueue(parsed)
-      setRobotAction(parsed.notation)
+      setRobotAction({ kind: 'text', text: parsed.notation })
     }
     model.apply(notation)
     refreshHud()
@@ -341,7 +363,7 @@ btnScramble.addEventListener('click', () => {
   view.applyInstant(parsed)
   robot.applyInstant(parsed)
   model.moveCount = 0
-  setRobotAction('Repos')
+  setRobotAction({ kind: 'key', key: 'robotRest' })
   refreshHud()
 })
 
@@ -350,7 +372,7 @@ btnReset.addEventListener('click', () => {
   model.reset()
   view.resetVisual()
   robot.resetVisual()
-  setRobotAction('Repos')
+  setRobotAction({ kind: 'key', key: 'robotRest' })
   refreshHud()
 })
 
@@ -380,7 +402,7 @@ btnPlay.addEventListener('click', () => {
 
 btnStop.addEventListener('click', () => {
   playing = false
-  setRobotAction('Pause')
+  setRobotAction({ kind: 'key', key: 'robotPause' })
 })
 
 tabGraph.addEventListener('click', () => setPanel('graph'))
@@ -430,18 +452,18 @@ btnRobotSolve.addEventListener('click', () => {
   setPanel('robot')
   if (view.busy) return
   if (model.isSolved()) {
-    solverState.textContent = 'déjà résolu'
-    setRobotAction('Résolu')
+    setSolver({ kind: 'key', key: 'solverDone' })
+    setRobotAction({ kind: 'key', key: 'robotSolved' })
     return
   }
-  setRobotAction('Planification')
+  setRobotAction({ kind: 'key', key: 'robotPlan' })
   if (solution.length > 0 && solIndex < solution.length && !solvePending) {
     playing = true
     issueSolutionMove()
     return
   }
   if (!solverReady) {
-    solverState.textContent = 'solveur indisponible'
+    setSolver({ kind: 'key', key: 'solverUnavailable' })
     return
   }
   clearSolution()
@@ -460,7 +482,7 @@ document.querySelector('#move-buttons')!.addEventListener('click', (e) => {
 })
 
 window.addEventListener('keydown', (e) => {
-  if (e.target instanceof HTMLInputElement) return
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return
   if (!aboutOverlay.hidden || !helpOverlay.hidden) return
   const k = e.key
   if (k === 'ArrowLeft') {
@@ -500,9 +522,6 @@ window.addEventListener('keydown', (e) => {
   clearSolution()
   startTurn(parsed)
 })
-
-const HINT_IDLE =
-  'Glissez un cubie pour tourner sa couche · le fond pour orbiter · deux doigts ou la molette pour zoomer'
 
 type PointerDrag = {
   pointerId: number
@@ -638,31 +657,36 @@ canvas.addEventListener('pointercancel', (e) => {
   if (pointerDrag && e.pointerId === pointerDrag.pointerId) releaseTurn(false)
 })
 
+function paintCamera() {
+  btnCamera.textContent = t(cameraOn ? 'cameraStop' : 'cameraStart')
+  btnSwap.hidden = !cameraOn
+  gesturePill.textContent = t(
+    gestureState === 'on' ? 'gesturesOn' : gestureState === 'denied' ? 'cameraDenied' : 'gesturesOff',
+  )
+  gesturePill.classList.toggle('busy', gestureState === 'on')
+  hint.textContent = t(cameraOn ? 'hintCamera' : 'hintIdle')
+}
+
 btnCamera.addEventListener('click', async () => {
   if (cameraOn) {
     hands.stop()
     cameraOn = false
+    gestureState = 'off'
     camBox.classList.remove('on')
-    btnCamera.textContent = 'Activer la caméra'
-    btnSwap.hidden = true
-    gesturePill.textContent = 'gestes off'
     cursorEl.classList.add('hidden')
-    hint.textContent = HINT_IDLE
+    paintCamera()
     return
   }
   try {
     await hands.start()
     cameraOn = true
+    gestureState = 'on'
     camBox.classList.add('on')
     syncCamOverlay()
-    btnCamera.textContent = 'Couper la caméra'
-    btnSwap.hidden = false
-    gesturePill.textContent = 'gestes on'
-    gesturePill.classList.add('busy')
-    hint.textContent =
-      'Main gauche ouverte : orbite · poing : fige · droite : viser une facette et pincer pour tourner'
+    paintCamera()
   } catch {
-    gesturePill.textContent = 'caméra refusée'
+    gestureState = 'denied'
+    paintCamera()
   }
 })
 
@@ -783,7 +807,17 @@ ro.observe(canvas.parentElement!)
 ro.observe(vizStage)
 ro.observe(camBox)
 
-refreshHud()
+function paintChrome() {
+  paintSolver()
+  setRobotAction(robotLabel)
+  setPanel(panelMode)
+  refreshHud()
+  paintCamera()
+  if (solution.length) renderPath()
+}
+
+const langSelect = document.querySelector<HTMLSelectElement>('#lang-select')!
+initI18n(langSelect, paintChrome)
 graph.resize()
 robot.resize()
 view.resize()

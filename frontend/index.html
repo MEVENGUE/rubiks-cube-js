@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500&family=Noto+Sans+JP:wght@400;500&family=Noto+Sans+KR:wght@400;500&family=Noto+Naskh+Arabic:wght@400;600&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -21,15 +21,16 @@
           <span class="brand-mark" aria-hidden="true"></span>
           <div>
             <h1>Rubik Graph</h1>
-            <p>Cube 3D manipulable · projection graphe · chemin de Kociemba</p>
+            <p data-i18n="tagline">Cube 3D manipulable · projection graphe · chemin de Kociemba</p>
           </div>
         </div>
         <div class="top-status">
           <span id="solved-pill" class="pill">résolu</span>
           <span id="move-pill" class="pill muted">0 coups</span>
           <span id="gesture-pill" class="pill muted">gestes off</span>
-          <button type="button" id="btn-help" class="about-btn">Guide</button>
-          <button type="button" id="btn-about" class="about-btn">Contact</button>
+          <select id="lang-select" class="lang-select" data-i18n-aria="langLabel" aria-label="Langue"></select>
+          <button type="button" id="btn-help" class="about-btn" data-i18n="guide">Guide</button>
+          <button type="button" id="btn-about" class="about-btn" data-i18n="contact">Contact</button>
         </div>
       </header>
 
@@ -38,7 +39,7 @@
           <canvas id="cube-canvas"></canvas>
           <div id="cursor" class="cursor hidden"></div>
           <div class="stage-hud">
-            <div class="hint" id="hint">
+            <div class="hint" id="hint" data-i18n="hintIdle">
               Glissez un cubie pour tourner sa couche · le fond pour orbiter · deux doigts ou la molette pour zoomer
             </div>
             <div class="cam-box" id="cam-box">
@@ -54,13 +55,13 @@
         <aside class="paper">
           <div class="paper-head">
             <div class="paper-title-row">
-              <h2 id="panel-title">Théorie des graphes</h2>
-              <div class="view-tabs" role="tablist" aria-label="Vue du panneau">
-                <button type="button" role="tab" id="tab-graph" aria-selected="true">Graphe</button>
-                <button type="button" role="tab" id="tab-robot" aria-selected="false">Robot</button>
+              <h2 id="panel-title" data-i18n="panelGraph">Théorie des graphes</h2>
+              <div class="view-tabs" role="tablist" data-i18n-aria="viewTabs" aria-label="Vue du panneau">
+                <button type="button" role="tab" id="tab-graph" aria-selected="true" data-i18n="tabGraph">Graphe</button>
+                <button type="button" role="tab" id="tab-robot" aria-selected="false" data-i18n="tabRobot">Robot</button>
               </div>
             </div>
-            <p id="panel-copy">
+            <p id="panel-copy" data-i18n-html="copyGraph">
               Chaque point est une facette. Les cercles concentriques sont les
               orbites d’un mouvement — la même idée que
               <em>Solving a Rubik’s Cube with graph theory</em>.
@@ -71,7 +72,7 @@
             <canvas id="robot-canvas" class="viz-canvas"></canvas>
             <div class="robot-hud" id="robot-hud" hidden>
               <div>
-                <span class="robot-kicker">ACTION</span>
+                <span class="robot-kicker" data-i18n="actionKicker">ACTION</span>
                 <strong id="robot-action">Repos</strong>
               </div>
               <a
@@ -86,13 +87,13 @@
           <div class="solution">
             <div class="solution-head">
               <div>
-                <h3>Chemin vers l’identité</h3>
-                <p class="cayley">
+                <h3 data-i18n="pathTitle">Chemin vers l’identité</h3>
+                <p class="cayley" data-i18n="pathSub">
                   Graphe de Cayley · chaque arête est un coup jusqu’à l’identité
                 </p>
               </div>
               <div class="solution-meta">
-                <span id="solver-state">Solveur en préparation…</span>
+                <span id="solver-state" data-i18n="solverPreparing">Solveur en préparation…</span>
                 <span id="sol-progress">—</span>
               </div>
             </div>
@@ -103,11 +104,11 @@
               <div class="progress-fill" id="sol-bar"></div>
             </div>
             <div class="transport">
-              <button type="button" id="btn-back" class="icon-btn" disabled title="Reculer d’un coup">Retour</button>
-              <button type="button" id="btn-step" class="icon-btn" disabled title="Avancer d’un coup">Pas à pas</button>
-              <button type="button" id="btn-play" class="icon-btn play" disabled>Lire</button>
-              <button type="button" id="btn-stop" class="icon-btn" disabled>Stop</button>
-              <button type="button" id="btn-robot-solve" class="icon-btn robot">
+              <button type="button" id="btn-back" class="icon-btn" disabled data-i18n="back" data-i18n-title="backTitle" title="Reculer d’un coup">Retour</button>
+              <button type="button" id="btn-step" class="icon-btn" disabled data-i18n="step" data-i18n-title="stepTitle" title="Avancer d’un coup">Pas à pas</button>
+              <button type="button" id="btn-play" class="icon-btn play" disabled data-i18n="play">Lire</button>
+              <button type="button" id="btn-stop" class="icon-btn" disabled data-i18n="stop">Stop</button>
+              <button type="button" id="btn-robot-solve" class="icon-btn robot" data-i18n="robotSolve">
                 Le robot résout
               </button>
             </div>
@@ -117,9 +118,9 @@
 
       <footer class="toolbar">
         <div class="cluster">
-          <button type="button" id="btn-scramble" class="primary">Mélanger</button>
-          <button type="button" id="btn-reset">Reset</button>
-          <button type="button" id="btn-solve">Résoudre</button>
+          <button type="button" id="btn-scramble" class="primary" data-i18n="scramble">Mélanger</button>
+          <button type="button" id="btn-reset" data-i18n="reset">Reset</button>
+          <button type="button" id="btn-solve" data-i18n="solve">Résoudre</button>
         </div>
         <div class="cluster moves" id="move-buttons">
           <button type="button" data-move="U">U</button>
@@ -136,8 +137,8 @@
           <button type="button" data-move="B'">B'</button>
         </div>
         <div class="cluster">
-          <button type="button" id="btn-camera">Activer la caméra</button>
-          <button type="button" id="btn-swap" hidden>Inverser L/R</button>
+          <button type="button" id="btn-camera" data-i18n="cameraStart">Activer la caméra</button>
+          <button type="button" id="btn-swap" hidden data-i18n="swapHands">Inverser L/R</button>
         </div>
       </footer>
     </div>
@@ -152,9 +153,9 @@
         <header class="about-head">
           <div>
             <p class="about-kicker">Rubik Graph</p>
-            <h2 id="about-title">Contact &amp; sources</h2>
+            <h2 id="about-title" data-i18n="aboutTitle">Contact &amp; sources</h2>
           </div>
-          <button type="button" id="btn-about-close" class="about-close" aria-label="Fermer">
+          <button type="button" id="btn-about-close" class="about-close" data-i18n="close" data-i18n-aria="close" aria-label="Fermer">
             Fermer
           </button>
         </header>
@@ -162,104 +163,101 @@
         <div class="about-body">
           <section class="about-contact" aria-labelledby="contact-heading">
             <h3 id="contact-heading">MEVENGUE Franck</h3>
-            <p class="about-role">
+            <p class="about-role" data-i18n-html="roleHtml">
               Étudiant Master <strong>Architecture Cloud, Systèmes &amp; Réseaux</strong>
               @
               <a href="https://www.supinfo.com/" target="_blank" rel="noreferrer">SUPINFO Paris</a>
               · Ingénieur SI @
               <a href="https://www.ecam-epmi.fr/" target="_blank" rel="noreferrer">ECAM-EPMI</a>
             </p>
-            <p class="about-pitch">
+            <p class="about-pitch" data-i18n="pitch">
               Je conçois des infrastructures fiables, j’automatise les déploiements et
               j’explore l’IA appliquée — du code à la production. Cette app réunit
               cube 3D, théorie des graphes, solveur Kociemba et gestes webcam.
             </p>
-            <p class="about-meta">Paris, France · disponible pour alternance, stage ou mission (Cloud · DevOps · Sécurité · IA)</p>
+            <p class="about-meta" data-i18n="meta">Paris, France · disponible pour alternance, stage ou mission (Cloud · DevOps · Sécurité · IA)</p>
             <div class="about-links">
-              <a href="https://mevenguefranck-siteweb.vercel.app/" target="_blank" rel="noreferrer">Portfolio</a>
-              <a href="https://github.com/MEVENGUE" target="_blank" rel="noreferrer">GitHub</a>
-              <a href="https://mevengue.github.io/" target="_blank" rel="noreferrer">Profil GitHub</a>
-              <a href="mailto:mevengueengofranck@gmail.com">Email</a>
+              <a href="https://mevenguefranck-siteweb.vercel.app/" target="_blank" rel="noreferrer" data-i18n="linkPortfolio">Portfolio</a>
+              <a href="https://github.com/MEVENGUE" target="_blank" rel="noreferrer" data-i18n="linkGithub">GitHub</a>
+              <a href="https://mevengue.github.io/" target="_blank" rel="noreferrer" data-i18n="linkProfile">Profil GitHub</a>
+              <a href="mailto:mevengueengofranck@gmail.com" data-i18n="linkEmail">Email</a>
               <a href="https://deepwiki.com/MEVENGUE/MEVENGUE" target="_blank" rel="noreferrer">DeepWiki</a>
             </div>
           </section>
 
           <section class="about-sources" aria-labelledby="sources-heading">
-            <h3 id="sources-heading">Sources d’inspiration</h3>
-            <p class="about-lead">
+            <h3 id="sources-heading" data-i18n="sourcesTitle">Sources d’inspiration</h3>
+            <p class="about-lead" data-i18n="sourcesLead">
               Rubik Graph n’est pas une copie d’un dépôt unique : il réécrit en JavaScript
               plusieurs idées (geste, graphe, solveur, robot) et s’appuie sur des bibliothèques
               open source.
             </p>
 
-            <h4>Applications et démos</h4>
+            <h4 data-i18n="hApps">Applications et démos</h4>
             <ul>
               <li>
                 <a href="https://github.com/Parth-fintech/Gesture-Recognition-for-Rubik-s-Cube-" target="_blank" rel="noreferrer">Gesture-Recognition-for-Rubik’s-Cube</a>
-                — main gauche = orbite, main droite = viser + pincer.
+                <span data-i18n="srcGesture">— main gauche = orbite, main droite = viser + pincer.</span>
               </li>
               <li>
-                <a href="https://www.reddit.com/r/educationalgifs/comments/127enam/2d_representation_of_a_rubiks_cube_help/" target="_blank" rel="noreferrer">Représentation 2D en cercles</a>
+                <a href="https://www.reddit.com/r/educationalgifs/comments/127enam/2d_representation_of_a_rubiks_cube_help/" target="_blank" rel="noreferrer" data-i18n="linkCircles">Représentation 2D en cercles</a>
                 ·
-                <a href="https://www.youtube.com/watch?v=MOWYDw98Pd4" target="_blank" rel="noreferrer">version plus fluide</a>
-                — orbites U / F / R, stickers aux intersections.
+                <a href="https://www.youtube.com/watch?v=MOWYDw98Pd4" target="_blank" rel="noreferrer" data-i18n="linkFluid">version plus fluide</a>
+                <span data-i18n="srcCircles">— orbites U / F / R, stickers aux intersections.</span>
               </li>
               <li>
                 <a href="https://github.com/guiguilhermegui/Hobby_Rubiks-Cube-Circles-2d-Projection-Group-Graph-Theory" target="_blank" rel="noreferrer">Hobby Rubik’s Cube Circles 2D Projection</a>
-                — le GIF Reddit comme graphe de facettes sur des cercles.
+                <span data-i18n="srcHobby">— le GIF Reddit comme graphe de facettes sur des cercles.</span>
               </li>
               <li>
                 <a href="https://dex-rubik-cube.yanjieze.com/" target="_blank" rel="noreferrer">Dexterous Cube Solving</a>
-                (Yanjie Ze) — bras qui tient le cube et rejoue la solution.
+                (Yanjie Ze) <span data-i18n="srcDex">— bras qui tient le cube et rejoue la solution.</span>
               </li>
             </ul>
 
-            <h4>Mathématiques et algorithmes</h4>
+            <h4 data-i18n="hMath">Mathématiques et algorithmes</h4>
             <ul>
               <li>
                 <a href="https://medium.com/@ricdonati/solving-a-rubiks-cube-using-graph-theory-6724e9ba68ce" target="_blank" rel="noreferrer">Solving a Rubik’s Cube Using Graph Theory</a>
-                (Ric Donati) — graphe de Cayley, chemin vers l’identité.
+                (Ric Donati) <span data-i18n="srcRic">— graphe de Cayley, chemin vers l’identité.</span>
               </li>
               <li>
                 <a href="https://yetanothermathblog.com/permutation-puzzles/lecture-notes-on-the-rubiks-cube/rubiks-cube-notes-cayley-graphs-and-gods-algorithm/" target="_blank" rel="noreferrer">Cayley graphs &amp; God’s algorithm</a>
-                — distance dans le graphe = longueur de solution.
+                <span data-i18n="srcCayley">— distance dans le graphe = longueur de solution.</span>
               </li>
               <li>
                 <a href="https://kociemba.org/cube.htm" target="_blank" rel="noreferrer">Herbert Kociemba — Two-Phase Algorithm</a>
                 ·
-                <a href="https://kociemba.org/math/twophase.htm" target="_blank" rel="noreferrer">détail mathématique</a>
-                — solveur réel (~20 coups).
+                <a href="https://kociemba.org/math/twophase.htm" target="_blank" rel="noreferrer" data-i18n="linkMath">détail mathématique</a>
+                <span data-i18n="srcKociemba">— solveur réel (~20 coups).</span>
               </li>
               <li>
-                David Singmaster, <em>Notes on Rubik’s Magic Cube</em> — notation
-                <code>U R F D L B</code> et suffixes <code>'</code> / <code>2</code>.
+                David Singmaster, <em>Notes on Rubik’s Magic Cube</em>
+                <span data-i18n="srcSingmaster">— notation U R F D L B et suffixes ’ / 2.</span>
               </li>
             </ul>
 
-            <h4>Bibliothèques</h4>
+            <h4 data-i18n="hLibs">Bibliothèques</h4>
             <ul>
               <li>
                 <a href="https://github.com/ldez/cubejs" target="_blank" rel="noreferrer">cubejs</a>
                 (npm,
-                <a href="https://www.npmjs.com/package/cubejs" target="_blank" rel="noreferrer">paquet</a>,
-                auteur original
+                <a href="https://www.npmjs.com/package/cubejs" target="_blank" rel="noreferrer" data-i18n="linkPkg">paquet</a>,
+                <span data-i18n="linkAuthor">auteur original</span>
                 <a href="http://www.digip.org/about/" target="_blank" rel="noreferrer">akheron</a>)
-                — modèle 3×3 et solveur Kociemba JS.
+                <span data-i18n="srcCubejs">— modèle 3×3 et solveur Kociemba JS.</span>
               </li>
               <li>
                 <a href="https://threejs.org/" target="_blank" rel="noreferrer">Three.js</a>
-                —
-                <a href="https://threejs.org/docs/#examples/en/controls/OrbitControls" target="_blank" rel="noreferrer">OrbitControls</a>,
-                <a href="https://threejs.org/docs/#examples/en/geometries/RoundedBoxGeometry" target="_blank" rel="noreferrer">RoundedBoxGeometry</a>.
+                <span data-i18n="srcThree">— OrbitControls, RoundedBoxGeometry.</span>
               </li>
               <li>
                 <a href="https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker" target="_blank" rel="noreferrer">MediaPipe Hand Landmarker</a>
-                —
-                <a href="https://www.npmjs.com/package/@mediapipe/tasks-vision" target="_blank" rel="noreferrer">@mediapipe/tasks-vision</a>.
+                <span data-i18n="srcMedia">— @mediapipe/tasks-vision.</span>
               </li>
               <li>
                 <a href="https://vite.dev/guide/" target="_blank" rel="noreferrer">Vite</a>
-                — bundler, HMR et worker.
+                <span data-i18n="srcVite">— bundler, HMR et worker.</span>
               </li>
             </ul>
           </section>
@@ -276,86 +274,86 @@
         <header class="about-head">
           <div>
             <p class="about-kicker">Rubik Graph</p>
-            <h2 id="help-title">Guide d’utilisation</h2>
+            <h2 id="help-title" data-i18n="helpTitle">Guide d’utilisation</h2>
           </div>
-          <button type="button" id="btn-help-close" class="about-close" aria-label="Fermer">
+          <button type="button" id="btn-help-close" class="about-close" data-i18n="close" data-i18n-aria="close" aria-label="Fermer">
             Fermer
           </button>
         </header>
         <div class="about-body">
-          <p class="about-lead">
+          <p class="about-lead" data-i18n="helpLead">
             Souris, doigt et clavier. Même application sur ordinateur, tablette et téléphone.
           </p>
 
           <section class="help-section" aria-labelledby="help-new">
-            <h3 id="help-new">🆕 Nouvelle partie</h3>
-            <p class="about-pitch">
+            <h3 id="help-new"><span aria-hidden="true">🆕</span> <span data-i18n="helpNewTitle">Nouvelle partie</span></h3>
+            <p class="about-pitch" data-i18n-html="helpNewHtml">
               Avant de lancer ou de modifier une partie, appuyez sur <strong>Reset</strong> (ou <code>Z</code>).
               Le cube revient résolu et le chemin est effacé. Ensuite : Mélanger, tours à la main, puis Résoudre.
             </p>
           </section>
 
           <section class="help-section" aria-labelledby="help-mouse">
-            <h3 id="help-mouse">🖱️ Souris</h3>
+            <h3 id="help-mouse"><span aria-hidden="true">🖱️</span> <span data-i18n="helpMouseTitle">Souris</span></h3>
             <ul class="help-list">
-              <li><span aria-hidden="true">🧩</span><span>Glisser un cubie tourne sa couche. Un court mouvement revient en place, un geste plus long s’aligne à 90°.</span></li>
-              <li><span aria-hidden="true">↔️</span><span>Une arête entre deux colonnes tourne la tranche du milieu.</span></li>
-              <li><span aria-hidden="true">🌑</span><span>Glisser le fond noir tourne autour du cube.</span></li>
-              <li><span aria-hidden="true">🖱️</span><span>Clic droit maintenu, puis glisser : orbite, même en partant d’un cubie.</span></li>
-              <li><span aria-hidden="true">🔍</span><span>Molette : zoom.</span></li>
+              <li><span aria-hidden="true">🧩</span><span data-i18n="helpM1">Glisser un cubie tourne sa couche. Un court mouvement revient en place, un geste plus long s’aligne à 90°.</span></li>
+              <li><span aria-hidden="true">↔️</span><span data-i18n="helpM2">Une arête entre deux colonnes tourne la tranche du milieu.</span></li>
+              <li><span aria-hidden="true">🌑</span><span data-i18n="helpM3">Glisser le fond noir tourne autour du cube.</span></li>
+              <li><span aria-hidden="true">🖱️</span><span data-i18n="helpM4">Clic droit maintenu, puis glisser : orbite, même en partant d’un cubie.</span></li>
+              <li><span aria-hidden="true">🔍</span><span data-i18n="helpM5">Molette : zoom.</span></li>
             </ul>
           </section>
 
           <section class="help-section" aria-labelledby="help-touch">
-            <h3 id="help-touch">👆 Tactile</h3>
+            <h3 id="help-touch"><span aria-hidden="true">👆</span> <span data-i18n="helpTouchTitle">Tactile</span></h3>
             <ul class="help-list">
-              <li><span aria-hidden="true">☝️</span><span>Un doigt sur un cubie : la couche suit le doigt. Un geste vif valide le quart de tour.</span></li>
-              <li><span aria-hidden="true">🖐️</span><span>Un doigt sur le fond : tourner autour du cube.</span></li>
-              <li><span aria-hidden="true">🤏</span><span>Deux doigts : zoom et orbite. Un tour de couche déjà commencé est annulé.</span></li>
-              <li><span aria-hidden="true">📱</span><span>Sur un petit écran, les boutons U R' F… sont souvent plus fiables que le glisser.</span></li>
+              <li><span aria-hidden="true">☝️</span><span data-i18n="helpT1">Un doigt sur un cubie : la couche suit le doigt. Un geste vif valide le quart de tour.</span></li>
+              <li><span aria-hidden="true">🖐️</span><span data-i18n="helpT2">Un doigt sur le fond : tourner autour du cube.</span></li>
+              <li><span aria-hidden="true">🤏</span><span data-i18n="helpT3">Deux doigts : zoom et orbite. Un tour de couche déjà commencé est annulé.</span></li>
+              <li><span aria-hidden="true">📱</span><span data-i18n="helpT4">Sur un petit écran, les boutons U R' F… sont souvent plus fiables que le glisser.</span></li>
             </ul>
           </section>
 
           <section class="help-section" aria-labelledby="help-keys">
-            <h3 id="help-keys">⌨️ Clavier</h3>
-            <p class="about-meta">Les lettres suivent le clavier physique : la touche U lance U, même en AZERTY.</p>
+            <h3 id="help-keys"><span aria-hidden="true">⌨️</span> <span data-i18n="helpKeysTitle">Clavier</span></h3>
+            <p class="about-meta" data-i18n="helpKeysNote">Les lettres suivent le clavier physique : la touche U lance U, même en AZERTY.</p>
             <ul class="help-list">
-              <li><span aria-hidden="true">🔤</span><span><code>U</code> <code>R</code> <code>F</code> <code>D</code> <code>L</code> <code>B</code> — quart de tour. Majuscule : l’inverse (<code>U'</code>…).</span></li>
-              <li><span aria-hidden="true">🎲</span><span><code>S</code> — mélanger.</span></li>
-              <li><span aria-hidden="true">↩️</span><span><code>Z</code> — reset, cube résolu.</span></li>
-              <li><span aria-hidden="true">⬅️</span><span><code>←</code> revoit le coup précédent, <code>→</code> joue le suivant.</span></li>
-              <li><span aria-hidden="true">🙌</span><span><code>H</code> — inverse les mains de la webcam.</span></li>
-              <li><span aria-hidden="true">✖️</span><span><code>Échap</code> — ferme ce guide ou Contact.</span></li>
+              <li><span aria-hidden="true">🔤</span><span data-i18n="helpK1">U R F D L B — quart de tour. Majuscule : l’inverse (U’…).</span></li>
+              <li><span aria-hidden="true">🎲</span><span data-i18n="helpK2">S — mélanger.</span></li>
+              <li><span aria-hidden="true">↩️</span><span data-i18n="helpK3">Z — reset, cube résolu.</span></li>
+              <li><span aria-hidden="true">⬅️</span><span data-i18n="helpK4">← revoit le coup précédent, → joue le suivant.</span></li>
+              <li><span aria-hidden="true">🙌</span><span data-i18n="helpK5">H — inverse les mains de la webcam.</span></li>
+              <li><span aria-hidden="true">✖️</span><span data-i18n="helpK6">Échap — ferme ce guide ou Contact.</span></li>
             </ul>
           </section>
 
           <section class="help-section" aria-labelledby="help-buttons">
-            <h3 id="help-buttons">🎛️ Boutons</h3>
+            <h3 id="help-buttons"><span aria-hidden="true">🎛️</span> <span data-i18n="helpButtonsTitle">Boutons</span></h3>
             <ul class="help-list">
-              <li><span aria-hidden="true">🎲</span><span><strong>Mélanger</strong> — 24 coups aléatoires.</span></li>
-              <li><span aria-hidden="true">↩️</span><span><strong>Reset</strong> — cube résolu, chemin effacé.</span></li>
-              <li><span aria-hidden="true">✨</span><span><strong>Résoudre</strong> — chemin de Kociemba, puis lecture.</span></li>
-              <li><span aria-hidden="true">⏪</span><span><strong>Retour</strong>, <strong>Pas à pas</strong>, <strong>Lire</strong>, <strong>Stop</strong> — revoir ou enchaîner la solution. Une pastille du chemin rejoue ce coup.</span></li>
-              <li><span aria-hidden="true">🤖</span><span><strong>Le robot résout</strong> — le bras rejoue le chemin.</span></li>
+              <li><span aria-hidden="true">🎲</span><span data-i18n="helpB1">Mélanger — 24 coups aléatoires.</span></li>
+              <li><span aria-hidden="true">↩️</span><span data-i18n="helpB2">Reset — cube résolu, chemin effacé.</span></li>
+              <li><span aria-hidden="true">✨</span><span data-i18n="helpB3">Résoudre — chemin de Kociemba, puis lecture.</span></li>
+              <li><span aria-hidden="true">⏪</span><span data-i18n="helpB4">Retour, Pas à pas, Lire, Stop — revoir ou enchaîner la solution. Une pastille du chemin rejoue ce coup.</span></li>
+              <li><span aria-hidden="true">🤖</span><span data-i18n="helpB5">Le robot résout — le bras rejoue le chemin.</span></li>
             </ul>
-            <p class="about-meta">Chemin : vert déjà joué, orange en cours, crème à venir.</p>
+            <p class="about-meta" data-i18n="helpPathColors">Chemin : vert déjà joué, orange en cours, crème à venir.</p>
           </section>
 
           <section class="help-section" aria-labelledby="help-cam">
-            <h3 id="help-cam">📷 Webcam</h3>
+            <h3 id="help-cam"><span aria-hidden="true">📷</span> <span data-i18n="helpCamTitle">Webcam</span></h3>
             <ul class="help-list">
-              <li><span aria-hidden="true">📷</span><span><strong>Activer la caméra</strong> (HTTPS ou localhost). Main gauche ouverte : orbite. Poing : figer.</span></li>
-              <li><span aria-hidden="true">👌</span><span>Main droite : viser une facette, pincer, glisser, relâcher.</span></li>
-              <li><span aria-hidden="true">🔄</span><span><strong>Inverser L/R</strong> si les mains sont inversées.</span></li>
+              <li><span aria-hidden="true">📷</span><span data-i18n="helpC1">Activer la caméra (HTTPS ou localhost). Main gauche ouverte : orbite. Poing : figer.</span></li>
+              <li><span aria-hidden="true">👌</span><span data-i18n="helpC2">Main droite : viser une facette, pincer, glisser, relâcher.</span></li>
+              <li><span aria-hidden="true">🔄</span><span data-i18n="helpC3">Inverser L/R si les mains sont inversées.</span></li>
             </ul>
           </section>
 
           <section class="help-section" aria-labelledby="help-stuck">
-            <h3 id="help-stuck">🛠️ Si un coup ne part pas</h3>
+            <h3 id="help-stuck"><span aria-hidden="true">🛠️</span> <span data-i18n="helpStuckTitle">Si un coup ne part pas</span></h3>
             <ul class="help-list">
-              <li><span aria-hidden="true">📏</span><span>Glisser trop court : la couche revient. Poussez plus loin, ou faites un geste plus vif.</span></li>
-              <li><span aria-hidden="true">🎯</span><span>Recommencez au centre d’une face si le doigt est parti entre deux cubies.</span></li>
-              <li><span aria-hidden="true">⏳</span><span>Pendant une animation, attendez la fin avant le coup suivant.</span></li>
+              <li><span aria-hidden="true">📏</span><span data-i18n="helpS1">Glisser trop court : la couche revient. Poussez plus loin, ou faites un geste plus vif.</span></li>
+              <li><span aria-hidden="true">🎯</span><span data-i18n="helpS2">Recommencez au centre d’une face si le doigt est parti entre deux cubies.</span></li>
+              <li><span aria-hidden="true">⏳</span><span data-i18n="helpS3">Pendant une animation, attendez la fin avant le coup suivant.</span></li>
             </ul>
           </section>
         </div>

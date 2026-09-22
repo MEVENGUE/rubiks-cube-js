@@ -6,6 +6,8 @@ Faces : **U** haut (blanc), **R** droite (rouge), **F** face (vert), **D** bas (
 
 Un quart de tour s’écrit `U`. L’inverse s’écrit `U'`. Le demi-tour s’écrit `U2`.
 
+La langue se choisit dans le menu en haut à droite (français, anglais, allemand, espagnol, chinois, japonais, arabe, italien, coréen, lingala, isiZulu). Le choix est mémorisé dans le navigateur. Les notations de coups (`U`, `R'`, `M`…) restent les mêmes.
+
 ---
 
 ## Nouvelle partie
